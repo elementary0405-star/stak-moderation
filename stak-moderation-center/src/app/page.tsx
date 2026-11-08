@@ -5,199 +5,273 @@ import { useState } from "react";
 export default function Home() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    alert("Authentication is not configured yet.");
+  }
 
   return (
-    <main className="min-h-screen bg-[#090d16] text-white flex">
+    <main className="login-page">
+      <div className="login-container">
 
-      {/* Linke Informationsseite */}
-      <section className="hidden lg:flex w-1/2 min-h-screen flex-col justify-between p-16 border-r border-white/10 relative overflow-hidden">
+        <div className="brand">
+          <img
+            src="/stak-logo.png"
+            alt="STAK"
+            className="brand-logo"
+          />
 
-        <div className="absolute w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[130px] top-20 left-10" />
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-600/20">
-              S
-            </div>
-
-            <div>
-              <h1 className="font-bold text-lg tracking-wide">
-                STAK
-              </h1>
-              <p className="text-xs text-gray-500 tracking-[0.2em]">
-                MODERATION CENTER
-              </p>
-            </div>
-          </div>
+          <h1>STAK</h1>
+          <p>MODERATION & ADMINISTRATION</p>
         </div>
 
-        <div className="relative z-10 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs mb-8">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            Zentrale Moderationsverwaltung
+        <div className="login-card">
+          <div className="card-heading">
+            <h2>Welcome back</h2>
+            <p>Sign in to access your account.</p>
           </div>
 
-          <h2 className="text-5xl font-bold leading-tight mb-6">
-            Alles im Blick.
-            <br />
-            <span className="text-blue-500">
-              Alles dokumentiert.
-            </span>
-          </h2>
-
-          <p className="text-gray-400 text-lg leading-8 max-w-lg">
-            Verwalte Spielerprofile, dokumentiere Moderationsfälle
-            und behalte sämtliche Aktivitäten deiner Projekte
-            zentral an einem Ort im Überblick.
-          </p>
-
-          <div className="grid grid-cols-2 gap-4 mt-12">
-
-            <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-              <div className="text-blue-400 text-2xl mb-3">01</div>
-              <h3 className="font-semibold mb-1">Spielerprofile</h3>
-              <p className="text-sm text-gray-500">
-                Zentrale Verwaltung aller Spielerdaten.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-              <div className="text-blue-400 text-2xl mb-3">02</div>
-              <h3 className="font-semibold mb-1">Moderationsfälle</h3>
-              <p className="text-sm text-gray-500">
-                Nachvollziehbare Dokumentation aller Maßnahmen.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-              <div className="text-blue-400 text-2xl mb-3">03</div>
-              <h3 className="font-semibold mb-1">Teamverwaltung</h3>
-              <p className="text-sm text-gray-500">
-                Individuelle Rollen und Berechtigungen.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-              <div className="text-blue-400 text-2xl mb-3">04</div>
-              <h3 className="font-semibold mb-1">Aktivitätsprotokoll</h3>
-              <p className="text-sm text-gray-500">
-                Änderungen und Vorgänge nachvollziehen.
-              </p>
-            </div>
-
-          </div>
-        </div>
-
-        <div className="relative z-10 text-xs text-gray-600">
-          STAK Moderation Center · Zentrale Projektverwaltung
-        </div>
-
-      </section>
-
-      {/* Rechte Anmeldeseite */}
-      <section className="flex-1 min-h-screen flex items-center justify-center p-6 relative">
-
-        <div className="absolute w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[130px] bottom-0 right-0" />
-
-        <div className="relative z-10 w-full max-w-md">
-
-          <div className="lg:hidden flex items-center gap-3 mb-16">
-            <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-xl">
-              S
-            </div>
-
-            <div>
-              <h1 className="font-bold text-lg">STAK</h1>
-              <p className="text-xs text-gray-500 tracking-[0.2em]">
-                MODERATION CENTER
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-10">
-            <div className="text-sm text-blue-400 font-medium mb-3">
-              WILLKOMMEN ZURÜCK
-            </div>
-
-            <h2 className="text-3xl font-bold mb-3">
-              Anmeldung
-            </h2>
-
-            <p className="text-gray-400 leading-6">
-              Melde dich mit deinen persönlichen Zugangsdaten
-              an, um auf das Moderation Center zuzugreifen.
-            </p>
-          </div>
-
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-            }}
-            className="space-y-6"
-          >
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Benutzername
-              </label>
+          <form onSubmit={handleLogin}>
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
 
               <input
+                id="username"
                 type="text"
+                placeholder="Enter your username"
                 value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="Dein Benutzername"
+                onChange={(event) =>
+                  setUsername(event.target.value)
+                }
                 autoComplete="username"
-                className="w-full h-13 px-4 rounded-xl bg-[#111827] border border-white/10 text-white placeholder:text-gray-600 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                required
               />
             </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-gray-300">
-                  Passwort
-                </label>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+
+              <div className="password-wrapper">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
+                  autoComplete="current-password"
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() =>
+                    setShowPassword(!showPassword)
+                  }
+                >
+                  {showPassword ? "HIDE" : "SHOW"}
+                </button>
               </div>
-
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Dein Passwort"
-                autoComplete="current-password"
-                className="w-full h-13 px-4 rounded-xl bg-[#111827] border border-white/10 text-white placeholder:text-gray-600 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-              />
             </div>
 
-            <button
-              type="submit"
-              className="w-full h-13 rounded-xl bg-blue-600 hover:bg-blue-500 transition font-semibold shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
-            >
-              Anmelden
-              <span>→</span>
+            <button type="submit" className="login-button">
+              Sign In
             </button>
-
           </form>
 
-          <div className="mt-8 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-            <div className="flex items-start gap-3">
-              <div className="text-blue-400 mt-0.5">ⓘ</div>
-
-              <p className="text-xs text-gray-500 leading-5">
-                Der Zugang ist ausschließlich für autorisierte
-                Teammitglieder vorgesehen. Deine Zugangsdaten
-                dürfen nicht an andere Personen weitergegeben werden.
-              </p>
-            </div>
+          <div className="security-note">
+            <span className="security-dot"></span>
+            Restricted access · Authorized personnel only
           </div>
-
-          <div className="mt-12 flex justify-between text-xs text-gray-600">
-            <span>STAK Moderation Center</span>
-            <span>Geschützter Teamzugang</span>
-          </div>
-
         </div>
-      </section>
 
+        <footer>
+          STAK © 2026 · All rights reserved
+        </footer>
+
+      </div>
+
+      <style jsx>{`
+        .login-page {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          background:
+            radial-gradient(
+              ellipse at 50% 35%,
+              rgba(36, 75, 125, 0.16),
+              transparent 55%
+            ),
+            #080d16;
+          color: #f1f5f9;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .login-container {
+          width: 100%;
+          max-width: 410px;
+        }
+
+        .brand {
+          text-align: center;
+          margin-bottom: 32px;
+        }
+
+        .brand-logo {
+          width: 100px;
+          height: 100px;
+          object-fit: contain;
+          margin-bottom: 10px;
+        }
+
+        .brand h1 {
+          font-size: 27px;
+          font-weight: 800;
+          letter-spacing: 7px;
+          margin: 0;
+        }
+
+        .brand p {
+          font-size: 10px;
+          letter-spacing: 3px;
+          color: #8190a5;
+          margin-top: 9px;
+        }
+
+        .login-card {
+          background: #111a29;
+          border: 1px solid #253348;
+          border-radius: 13px;
+          padding: 34px;
+          box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+        }
+
+        .card-heading {
+          margin-bottom: 29px;
+        }
+
+        .card-heading h2 {
+          font-size: 23px;
+          margin: 0 0 8px;
+          font-weight: 700;
+        }
+
+        .card-heading p {
+          color: #8997aa;
+          font-size: 13px;
+          margin: 0;
+        }
+
+        .form-group {
+          margin-bottom: 21px;
+        }
+
+        label {
+          display: block;
+          font-size: 12px;
+          font-weight: 600;
+          color: #cbd5e1;
+          margin-bottom: 9px;
+        }
+
+        input {
+          width: 100%;
+          box-sizing: border-box;
+          height: 46px;
+          border: 1px solid #304158;
+          border-radius: 7px;
+          background: #0b1320;
+          color: white;
+          padding: 0 13px;
+          font-size: 13px;
+          outline: none;
+          transition: border 0.2s;
+        }
+
+        input:focus {
+          border-color: #4d8de0;
+        }
+
+        input::placeholder {
+          color: #64748b;
+        }
+
+        .password-wrapper {
+          position: relative;
+        }
+
+        .password-wrapper input {
+          padding-right: 65px;
+        }
+
+        .password-toggle {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: transparent;
+          border: none;
+          color: #8da4c2;
+          font-size: 10px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .login-button {
+          width: 100%;
+          height: 47px;
+          margin-top: 7px;
+          background: #2866b2;
+          border: 1px solid #397acb;
+          border-radius: 7px;
+          color: white;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .login-button:hover {
+          background: #3479ca;
+        }
+
+        .security-note {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          color: #718198;
+          font-size: 10px;
+          margin-top: 27px;
+        }
+
+        .security-dot {
+          width: 6px;
+          height: 6px;
+          background: #4c9a78;
+          border-radius: 50%;
+        }
+
+        footer {
+          text-align: center;
+          margin-top: 28px;
+          color: #56657a;
+          font-size: 10px;
+          letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 480px) {
+          .login-card {
+            padding: 27px 22px;
+          }
+        }
+      `}</style>
     </main>
   );
 }
