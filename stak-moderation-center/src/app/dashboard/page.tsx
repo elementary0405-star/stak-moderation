@@ -3,20 +3,88 @@
 import { useEffect, useState } from "react";
 import styles from "./dashboard.module.css";
 
+type StakRole =
+  | "owner"
+  | "co-owner"
+  | "management"
+  | "staff-manager"
+  | "moderator"
+  | "trail-moderator"
+  | "community-member";
+
 type DiscordUser = {
+  discordUserId?: string;
   username?: string;
-  globalName?: string;
-  discordRole?: string;
-  avatar?: string;
+  globalName?: string | null;
+  stakRole?: StakRole;
+  avatar?: string | null;
 };
 
 type AuthResponse = {
-  user?: DiscordUser;
-  username?: string;
-  globalName?: string;
-  discordRole?: string;
-  avatar?: string;
+  authenticated?: boolean;
+  user?: DiscordUser | null;
 };
+
+const ROLE_LABELS: Record<StakRole, string> = {
+  owner: "OWNER",
+  "co-owner": "CO-OWNER",
+  management: "MANAGEMENT",
+  "staff-manager": "STAFF MANAGER",
+  moderator: "MODERATOR",
+  "trail-moderator": "TRAIL-MODERATOR",
+  "community-member": "COMMUNITY MEMBER",
+};
+
+const STAFF_CARDS = [
+  {
+    number: "01",
+    title: "Staff Center",
+    description:
+      "Access internal staff information, team resources and important staff tools.",
+  },
+  {
+    number: "02",
+    title: "Moderation Center",
+    description:
+      "Access moderation systems, cases and player records.",
+  },
+  {
+    number: "03",
+    title: "Staff Handbook",
+    description:
+      "Read the staff handbook, responsibilities and internal guidelines.",
+  },
+  {
+    number: "04",
+    title: "Staff Training",
+    description:
+      "Access staff training materials and qualification content.",
+  },
+];
+
+const COMMUNITY_CARDS = [
+  {
+    number: "01",
+    title: "Apply",
+    description:
+      "Learn about available team positions and submit an application.",
+  },
+  {
+    number: "02",
+    title: "Community Guidelines",
+    description:
+      "Read the rules and guidelines that apply to the STAK community.",
+  },
+];
+
+const STAFF_ROLES: StakRole[] = [
+  "owner",
+  "co-owner",
+  "management",
+  "staff-manager",
+  "moderator",
+  "trail-moderator",
+];
 
 export default function DashboardPage() {
   const [user, setUser] = useState<DiscordUser | null>(null);
@@ -36,7 +104,12 @@ export default function DashboardPage() {
 
         const data: AuthResponse = await response.json();
 
-        setUser(data.user ?? data);
+        if (!data.user) {
+          window.location.href = "/";
+          return;
+        }
+
+        setUser(data.user);
       } catch (error) {
         console.error("Failed to load user:", error);
         window.location.href = "/";
@@ -47,6 +120,17 @@ export default function DashboardPage() {
 
     loadUser();
   }, []);
+
+  async function logout() {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      window.location.href = "/";
+    }
+  }
 
   if (loading) {
     return (
@@ -60,16 +144,10 @@ export default function DashboardPage() {
     return null;
   }
 
-  async function logout() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      window.location.href = "/";
-    }
-  }
+  const role = user.stakRole;
+  const isStaff = role ? STAFF_ROLES.includes(role) : false;
+  const isCommunityMember = role === "community-member";
+  const hasValidRole = isStaff || isCommunityMember;
 
   return (
     <main className={styles.page}>
@@ -79,7 +157,9 @@ export default function DashboardPage() {
         </a>
 
         <div className={styles.role}>
-          {user.discordRole || "ROLE NOT SYNCHRONIZED"}
+          {role && ROLE_LABELS[role]
+            ? ROLE_LABELS[role]
+            : "ROLE NOT SYNCHRONIZED"}
         </div>
 
         <button
@@ -105,39 +185,42 @@ export default function DashboardPage() {
       <section className={styles.overview}>
         <h2>Overview</h2>
 
-        <div className={styles.grid}>
-          <a href="/staff" className={styles.card}>
-            <span>01</span>
-            <h3>Staff Center</h3>
-            <p>
-              Access staff-related systems and information.
-            </p>
-          </a>
+        {!hasValidRole && (
+          <p>
+            Your STAK role could not be verified. Please make sure
+            you have an active role in the STAK Discord server.
+          </p>
+        )}
 
-          <a href="/moderation" className={styles.card}>
-            <span>02</span>
-            <h3>Moderation Center</h3>
-            <p>
-              Access moderation tools and player records.
-            </p>
-          </a>
+        {isStaff && (
+          <div className={styles.grid}>
+            {STAFF_CARDS.map((card) => (
+              <article
+                key={card.number}
+                className={styles.card}
+              >
+                <span>{card.number}</span>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </article>
+            ))}
+          </div>
+        )}
 
-          <a href="/handbook" className={styles.card}>
-            <span>03</span>
-            <h3>Staff Handbook</h3>
-            <p>
-              Read important staff information and guidelines.
-            </p>
-          </a>
-
-          <a href="/training" className={styles.card}>
-            <span>04</span>
-            <h3>Staff Training</h3>
-            <p>
-              Access training materials and qualifications.
-            </p>
-          </a>
-        </div>
+        {isCommunityMember && (
+          <div className={styles.grid}>
+            {COMMUNITY_CARDS.map((card) => (
+              <article
+                key={card.number}
+                className={styles.card}
+              >
+                <span>{card.number}</span>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );

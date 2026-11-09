@@ -16,14 +16,12 @@ export async function GET() {
     );
   }
 
-  // Generate a random state value to protect the login process.
   const stateBytes = crypto.getRandomValues(new Uint8Array(32));
 
   const state = Array.from(stateBytes)
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  // Build the Discord authorization URL.
   const discordUrl = new URL(
     "https://discord.com/oauth2/authorize"
   );
@@ -34,14 +32,16 @@ export async function GET() {
   discordUrl.searchParams.set("scope", "identify");
   discordUrl.searchParams.set("state", state);
 
-  // Redirect the user to Discord.
-  const response = Response.redirect(discordUrl.toString(), 302);
+  const headers = new Headers();
 
-  // Store the state temporarily in a secure cookie.
-  response.headers.append(
+  headers.set("Location", discordUrl.toString());
+  headers.set(
     "Set-Cookie",
     `discord_oauth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`
   );
 
-  return response;
+  return new Response(null, {
+    status: 302,
+    headers,
+  });
 }

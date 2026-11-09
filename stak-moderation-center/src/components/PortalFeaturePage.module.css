@@ -1,0 +1,70 @@
+.pageSection {
+  max-width: 850px;
+  padding: 18px 0 45px;
+}
+
+.eyebrow {
+  color: #78a9df;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+}
+
+.pageSection h1 {
+  margin: 16px 0 10px;
+  font-size: clamp(36px, 5vw, 52px);
+  letter-spacing: -2px;
+}
+
+.pageSection h1 span {
+  color: #78a9df;
+}
+
+.description {
+  margin: 0;
+  color: #9daabc;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.notice {
+  margin-top: 36px;
+  padding: 27px;
+  border: 1px solid #344b6a;
+  border-radius: 8px;
+  background: #111a28;
+}
+
+.noticeLabel {
+  color: #78a9df;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.notice h2 {
+  margin: 14px 0 8px;
+  font-size: 20px;
+}
+
+.notice p {
+  margin: 0;
+  color: #aab8ca;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.notice .note {
+  margin-top: 13px;
+  color: #74859b;
+  font-size: 11px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 25px;
+  color: #8db9e9;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}

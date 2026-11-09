@@ -15,9 +15,6 @@ const bindings = env as typeof env & {
   DISCORD_BOT_TOKEN?: string;
 };
 
-const DEFAULT_SITE_URL =
-  "https://stak-moderation-center.elementary0405.workers.dev";
-
 function getCookie(request: Request, name: string): string | null {
   const cookieHeader = request.headers.get("Cookie");
 
@@ -28,10 +25,9 @@ function getCookie(request: Request, name: string): string | null {
 
     if (separator === -1) continue;
 
-    const key = cookie.slice(0, separator).trim();
-    const value = cookie.slice(separator + 1).trim();
-
-    if (key === name) return value;
+    if (cookie.slice(0, separator).trim() === name) {
+      return cookie.slice(separator + 1).trim();
+    }
   }
 
   return null;
@@ -48,22 +44,25 @@ function clearOAuthCookie(): string {
   ].join("; ");
 }
 
-function redirectWithError(error: string): Response {
-  const target = new URL(
-    "/",
-    bindings.DISCORD_REDIRECT_URI || DEFAULT_SITE_URL
+function redirectWithError(error: string, origin: string): Response {
+  const headers = new Headers();
+
+  headers.set(
+    "Location",
+    `${origin}/?discord_error=${encodeURIComponent(error)}`
   );
 
-  target.searchParams.set("discord_error", error);
+  headers.append("Set-Cookie", clearOAuthCookie());
 
-  const response = Response.redirect(target.toString(), 302);
-
-  response.headers.append("Set-Cookie", clearOAuthCookie());
-
-  return response;
+  return new Response(null, {
+    status: 302,
+    headers,
+  });
 }
 
 export async function GET(request: Request) {
+  const origin = new URL(request.url).origin;
+
   try {
     const url = new URL(request.url);
 
@@ -72,11 +71,11 @@ export async function GET(request: Request) {
     const storedState = getCookie(request, "discord_oauth_state");
 
     if (!code || !returnedState || !storedState) {
-      return redirectWithError("invalid_callback");
+      return redirectWithError("invalid_callback", origin);
     }
 
     if (returnedState !== storedState) {
-      return redirectWithError("invalid_state");
+      return redirectWithError("invalid_state", origin);
     }
 
     const clientId = bindings.DISCORD_CLIENT_ID;
@@ -86,7 +85,7 @@ export async function GET(request: Request) {
 
     if (!clientId || !clientSecret || !redirectUri || !botToken) {
       console.error("Discord authentication secrets are incomplete.");
-      return redirectWithError("configuration_error");
+      return redirectWithError("configuration_error", origin);
     }
 
     // Exchange the OAuth2 code for an access token.
@@ -108,12 +107,15 @@ export async function GET(request: Request) {
     );
 
     if (!tokenResponse.ok) {
+      const errorDetails = await tokenResponse.text();
+
       console.error(
         "Discord token exchange failed:",
-        tokenResponse.status
+        tokenResponse.status,
+        errorDetails
       );
 
-      return redirectWithError("token_exchange_failed");
+      return redirectWithError("token_exchange_failed", origin);
     }
 
     const tokenData = (await tokenResponse.json()) as {
@@ -132,7 +134,8 @@ export async function GET(request: Request) {
     );
 
     if (!userResponse.ok) {
-      return redirectWithError("user_lookup_failed");
+      console.error("Discord user lookup failed:", userResponse.status);
+      return redirectWithError("user_lookup_failed", origin);
     }
 
     const discordUser = (await userResponse.json()) as {
@@ -144,10 +147,10 @@ export async function GET(request: Request) {
     };
 
     if (discordUser.bot === true) {
-      return redirectWithError("bots_not_allowed");
+      return redirectWithError("bots_not_allowed", origin);
     }
 
-    // Verify STAK server membership and retrieve Discord roles.
+    // Verify STAK server membership and retrieve roles.
     const memberResponse = await fetch(
       `https://discord.com/api/v10/guilds/${STAK_DISCORD.guildId}/members/${discordUser.id}`,
       {
@@ -159,15 +162,11 @@ export async function GET(request: Request) {
 
     if (!memberResponse.ok) {
       if (memberResponse.status === 404) {
-        return redirectWithError("not_a_server_member");
+        return redirectWithError("not_a_server_member", origin);
       }
 
-      console.error(
-        "Discord member lookup failed:",
-        memberResponse.status
-      );
-
-      return redirectWithError("member_lookup_failed");
+      console.error("Discord member lookup failed:", memberResponse.status);
+      return redirectWithError("member_lookup_failed", origin);
     }
 
     const member = (await memberResponse.json()) as {
@@ -178,17 +177,16 @@ export async function GET(request: Request) {
     };
 
     if (member.user?.bot === true) {
-      return redirectWithError("bots_not_allowed");
+      return redirectWithError("bots_not_allowed", origin);
     }
 
-    // Determine the highest STAK role.
     const stakRole = getHighestStakRole(member.roles, false);
 
     if (!stakRole) {
-      return redirectWithError("no_stak_role");
+      return redirectWithError("no_stak_role", origin);
     }
 
-    // Create a secure server-side session.
+    // Create the server-side session.
     const session = await createDiscordSession({
       discordUserId: discordUser.id,
       username: discordUser.username,
@@ -197,25 +195,19 @@ export async function GET(request: Request) {
       stakRole,
     });
 
-    const response = Response.redirect(
-      new URL("/", redirectUri).toString(),
-      302
-    );
+    const headers = new Headers();
 
-    response.headers.append(
-      "Set-Cookie",
-      createSessionCookie(session.token)
-    );
+    headers.set("Location", origin);
+    headers.append("Set-Cookie", createSessionCookie(session.token));
+    headers.append("Set-Cookie", clearOAuthCookie());
 
-    response.headers.append(
-      "Set-Cookie",
-      clearOAuthCookie()
-    );
-
-    return response;
+    return new Response(null, {
+      status: 302,
+      headers,
+    });
   } catch (error) {
     console.error("Discord callback error:", error);
 
-    return redirectWithError("authentication_failed");
+    return redirectWithError("authentication_failed", origin);
   }
 }

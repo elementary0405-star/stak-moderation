@@ -1,0 +1,10 @@
+.section { max-width: 850px; padding: 18px 0 45px; }
+.eyebrow { color: #78a9df; font-size: 10px; font-weight: 700; letter-spacing: 2.5px; }
+.section h1 { margin: 16px 0 10px; font-size: clamp(36px, 5vw, 52px); letter-spacing: -2px; }
+.section h1 span { color: #78a9df; }
+.description { margin: 0; color: #9daabc; font-size: 14px; line-height: 1.75; }
+.panel { margin-top: 36px; padding: 28px; border: 1px solid #344b6a; border-radius: 8px; background: #111a28; }
+.status { color: #78a9df; font-size: 9px; font-weight: 700; letter-spacing: 2px; }
+.panel h2 { margin: 15px 0 8px; font-size: 21px; }
+.panel p { margin: 0; color: #aab8ca; font-size: 13px; line-height: 1.7; }
+.pending { display: inline-block; margin-top: 20px; padding: 8px 10px; border: 1px solid #344050; border-radius: 4px; color: #8292a8; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
