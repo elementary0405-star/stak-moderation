@@ -1,0 +1,155 @@
+.page {
+  min-height: 100vh;
+  background: #090e18;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #090e18;
+  color: #ffffff;
+}
+
+.header {
+  height: 85px;
+  padding: 0 7%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  border-bottom: 1px solid #202a38;
+}
+
+.logo img {
+  max-width: 145px;
+  max-height: 45px;
+  object-fit: contain;
+}
+
+.role {
+  padding: 10px 20px;
+  border: 1px solid #344b6a;
+  border-radius: 5px;
+  color: #83b5ee;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.logout {
+  justify-self: end;
+  background: transparent;
+  border: 1px solid #344050;
+  border-radius: 5px;
+  padding: 11px 18px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.logout:hover {
+  background: #182335;
+}
+
+.welcome {
+  padding: 85px 10% 65px;
+  border-bottom: 1px solid #202a38;
+}
+
+.label {
+  color: #78a9df;
+  font-size: 10px;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+.welcome h1 {
+  font-size: clamp(42px, 5vw, 65px);
+  letter-spacing: -3px;
+  margin: 20px 0 10px;
+}
+
+.welcome h1 span {
+  color: #78a9df;
+}
+
+.welcome p {
+  color: #9daabc;
+  font-size: 15px;
+}
+
+.overview {
+  padding: 65px 10%;
+}
+
+.overview h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.card {
+  padding: 28px;
+  background: #111a28;
+  border: 1px solid #263347;
+  border-radius: 7px;
+  text-decoration: none;
+  color: #ffffff;
+  transition: 0.2s;
+}
+
+.card:hover {
+  border-color: #548cc8;
+  transform: translateY(-3px);
+}
+
+.card span {
+  color: #78a9df;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.card h3 {
+  margin: 20px 0 10px;
+  font-size: 18px;
+}
+
+.card p {
+  color: #9daabc;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 650px) {
+  .header {
+    padding: 0 5%;
+    grid-template-columns: 1fr auto;
+  }
+
+  .role {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-bottom: 12px;
+  }
+
+  .header {
+    height: 115px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome,
+  .overview {
+    padding-left: 6%;
+    padding-right: 6%;
+  }
+}
