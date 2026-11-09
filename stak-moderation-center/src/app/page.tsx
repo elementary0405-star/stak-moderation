@@ -1,15 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type LoginResponse = {
+  success: boolean;
+  message?: string;
+  user?: {
+    id: string;
+    username: string;
+    role: string;
+    mustChangePassword: boolean;
+  };
+};
 
 export default function Home() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => {
+        if (response.ok) {
+          window.location.replace("/dashboard");
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    alert("Authentication is not configured yet.");
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = (await response.json()) as LoginResponse;
+
+      if (!response.ok || !result.success || !result.user) {
+        setError(result.message || "Login failed. Please try again.");
+        return;
+      }
+
+      if (result.user.mustChangePassword) {
+        window.location.replace("/change-password");
+      } else {
+        window.location.replace("/dashboard");
+      }
+    } catch {
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -65,8 +116,18 @@ export default function Home() {
               </div>
             </div>
 
-            <button type="submit" className="login-button">
-              Sign In
+            {error && (
+              <div className="login-error" role="alert">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="login-button"
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
