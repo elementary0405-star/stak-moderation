@@ -1,144 +1,172 @@
-"use client";
+import styles from "./home.module.css";
 
-import { useEffect, useState } from "react";
-
-type LoginResponse = {
-  success: boolean;
-  message?: string;
-  user?: {
-    id: string;
-    username: string;
-    role: string;
-    mustChangePassword: boolean;
-  };
-};
-
-export default function Home() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then((response) => {
-        if (response.ok) {
-          window.location.replace("/dashboard");
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const result = (await response.json()) as LoginResponse;
-
-      if (!response.ok || !result.success || !result.user) {
-        setError(result.message || "Login failed. Please try again.");
-        return;
-      }
-
-      if (result.user.mustChangePassword) {
-        window.location.replace("/change-password");
-      } else {
-        window.location.replace("/dashboard");
-      }
-    } catch {
-      setError("Unable to connect to the server. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
+export default function HomePage() {
   return (
-    <main className="login-page">
-      <div className="login-container">
-        <div className="brand">
-          <img src="/stak-logo.png" alt="STAK" className="brand-logo" />
-          <h1>STAK</h1>
-          <p>MODERATION &amp; ADMINISTRATION</p>
+    <main className={styles.page}>
+      {/* Navigation */}
+      <header className={styles.header}>
+        <a href="/" className={styles.logo}>
+          STAK<span>.</span>
+        </a>
+
+        <nav className={styles.navigation}>
+          <a href="#home">Home</a>
+          <a href="#about">About</a>
+          <a href="#community">Community</a>
+          <a href="#staff">Staff</a>
+        </nav>
+
+        <a
+          href="/api/auth/discord"
+          className={styles.connectButton}
+        >
+          Connect with Discord
+        </a>
+      </header>
+
+      {/* Hero */}
+      <section id="home" className={styles.hero}>
+        <div className={styles.heroContent}>
+          <div className={styles.badge}>
+            <span className={styles.statusDot}></span>
+            STAK COMMUNITY
+          </div>
+
+          <h1>
+            Welcome to
+            <br />
+            <span>STAK.</span>
+          </h1>
+
+          <p className={styles.heroDescription}>
+            A community built on teamwork, interaction and shared
+            experiences. Discover STAK, become part of our community
+            or join our team.
+          </p>
+
+          <div className={styles.heroActions}>
+            <a
+              href="/api/auth/discord"
+              className={styles.primaryButton}
+            >
+              Connect with Discord <span>→</span>
+            </a>
+
+            <a href="#about" className={styles.secondaryButton}>
+              Discover STAK
+            </a>
+          </div>
         </div>
 
-        <section className="login-card">
-          <div className="card-heading">
-            <h2>Welcome back</h2>
-            <p>Sign in to access your account.</p>
+        <div className={styles.heroDecoration}>
+          <div className={styles.glow}></div>
+          <div className={styles.bigLogo}>S</div>
+          <div className={styles.decorationText}>COMMUNITY · TEAM · STAK</div>
+        </div>
+      </section>
+
+      {/* About */}
+      <section id="about" className={styles.section}>
+        <div className={styles.sectionHeading}>
+          <span className={styles.eyebrow}>ABOUT US</span>
+          <h2>More than just a community.</h2>
+          <p>
+            STAK brings people together through shared interests,
+            community activities and a dedicated team.
+          </p>
+        </div>
+
+        <div className={styles.cards}>
+          <article className={styles.card}>
+            <div className={styles.cardNumber}>01</div>
+            <h3>Our Community</h3>
+            <p>
+              Meet new people, connect with other members and become
+              part of the STAK community.
+            </p>
+          </article>
+
+          <article className={styles.card}>
+            <div className={styles.cardNumber}>02</div>
+            <h3>Our Team</h3>
+            <p>
+              Our team supports the community, assists members and
+              helps maintain an organized environment.
+            </p>
+          </article>
+
+          <article className={styles.card}>
+            <div className={styles.cardNumber}>03</div>
+            <h3>Our Platform</h3>
+            <p>
+              Access important information, applications and
+              community services through one central platform.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      {/* Community */}
+      <section id="community" className={styles.communitySection}>
+        <div>
+          <span className={styles.eyebrow}>JOIN THE COMMUNITY</span>
+          <h2>Become part of STAK.</h2>
+          <p>
+            Connect with our Discord community and stay up to date
+            with everything happening at STAK.
+          </p>
+        </div>
+
+        <a
+          href="https://discord.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.primaryButton}
+        >
+          Visit Discord <span>↗</span>
+        </a>
+      </section>
+
+      {/* Staff */}
+      <section id="staff" className={styles.staffSection}>
+        <div className={styles.sectionHeading}>
+          <span className={styles.eyebrow}>JOIN OUR TEAM</span>
+          <h2>Interested in becoming Staff?</h2>
+          <p>
+            Become part of the STAK team and help us support and
+            develop our community.
+          </p>
+        </div>
+
+        <div className={styles.applicationBox}>
+          <div>
+            <h3>Staff Applications</h3>
+            <p>
+              Connect your Discord account and submit your
+              application through our application portal.
+            </p>
           </div>
 
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                autoComplete="username"
-                required
-              />
-            </div>
+          <a href="/apply" className={styles.primaryButton}>
+            Apply for Staff <span>→</span>
+          </a>
+        </div>
+      </section>
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
+      {/* Footer */}
+      <footer className={styles.footer}>
+        <a href="/" className={styles.logo}>
+          STAK<span>.</span>
+        </a>
 
-              <div className="password-wrapper">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
+        <p>© {new Date().getFullYear()} STAK. All rights reserved.</p>
 
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? "HIDE" : "SHOW"}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="login-error" role="alert">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="login-button"
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
-
-          <div className="security-note">
-            <span className="security-dot"></span>
-            Restricted access · Authorized personnel only
-          </div>
-        </section>
-
-        <footer>STAK © 2026 · All rights reserved</footer>
-      </div>
+        <div>
+          <a href="#about">About</a>
+          <a href="#community">Community</a>
+          <a href="#staff">Staff Applications</a>
+        </div>
+      </footer>
     </main>
   );
 }
