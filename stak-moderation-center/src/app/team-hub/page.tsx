@@ -1,136 +1,268 @@
 "use client";
 
 import PortalShell from "@/components/PortalShell";
+import type { DiscordSessionUser } from "@/lib/auth";
 import { hasPortalAccess } from "@/lib/portal-access";
 import styles from "./team-hub.module.css";
 
-const ITEMS = [
+type AccessLevel = "staff" | "staffManager" | "owner";
+
+type HubCard = {
+  number: string;
+  category: string;
+  title: string;
+  description: string;
+  href: string;
+  access: AccessLevel;
+  badge?: string;
+};
+
+const PERSONAL_CARDS: HubCard[] = [
   {
+    number: "01",
+    category: "PERSONAL PROFILE",
     title: "My Staff Record",
-    description: "View your own staff information, role details and recorded history.",
+    description:
+      "View your personal staff information, current rank and relevant staff history.",
     href: "/team-hub/my-record",
-    access: "staff" as const,
-    group: "Personal workspace",
+    access: "staff",
   },
   {
+    number: "02",
+    category: "AVAILABILITY",
     title: "Absence Management",
-    description: "Submit an absence and review your current or previous absence periods.",
+    description:
+      "Submit absence notifications, communicate your availability and review previous absences.",
     href: "/team-hub/absence",
-    access: "staff" as const,
-    group: "Personal workspace",
+    access: "staff",
   },
   {
-    title: "Staff Introduction",
-    description: "Review the first steps, expectations and important information for newly accepted staff members.",
-    href: "/team-hub/introduction",
-    access: "staff" as const,
-    group: "Personal workspace",
-  },
-  {
+    number: "03",
+    category: "COMMUNICATION",
     title: "Feedback Box",
-    description: "Send confidential feedback directly to the STAK Owner.",
+    description:
+      "Send confidential feedback, suggestions or concerns directly to the Owner.",
     href: "/team-hub/feedback",
-    access: "staff" as const,
-    group: "Personal workspace",
-  },
-  {
-    title: "Staff Directory",
-    description: "View team members, ranks, current absence status and staff records.",
-    href: "/team-hub/staff-directory",
-    access: "staffManager" as const,
-    group: "Management tools",
-  },
-  {
-    title: "Staff Applications",
-    description: "Review incoming applications and manage recruitment decisions.",
-    href: "/team-hub/applications",
-    access: "staffManager" as const,
-    group: "Management tools",
-  },
-  {
-    title: "Awards & Growth",
-    description: "Record awards, progress, rank changes and staff development.",
-    href: "/team-hub/growth",
-    access: "staffManager" as const,
-    group: "Management tools",
-  },
-  {
-    title: "Warnings & History",
-    description: "Review staff warnings and the documented history of team members.",
-    href: "/team-hub/warnings",
-    access: "staffManager" as const,
-    group: "Management tools",
-  },
-  {
-    title: "Staff Tickets",
-    description: "Review and manage internal staff tickets.",
-    href: "/team-hub/staff-tickets",
-    access: "staffManager" as const,
-    group: "Management tools",
-  },
-  {
-    title: "Feedback Inbox",
-    description: "Read confidential feedback submissions. This area is restricted to the Owner.",
-    href: "/team-hub/feedback-inbox",
-    access: "owner" as const,
-    group: "Owner tools",
+    access: "staff",
   },
 ];
 
-function Card({ item, number }: { item: (typeof ITEMS)[number]; number: string }) {
+const MANAGEMENT_CARDS: HubCard[] = [
+  {
+    number: "04",
+    category: "STAFF OVERVIEW",
+    title: "Staff Directory",
+    description:
+      "Browse the STAK staff team, search members and access individual staff records.",
+    href: "/team-hub/staff-directory",
+    access: "staffManager",
+  },
+  {
+    number: "05",
+    category: "STAFF ADMINISTRATION",
+    title: "Warnings & History",
+    description:
+      "Review staff warnings, document relevant incidents and maintain disciplinary history.",
+    href: "/team-hub/warnings",
+    access: "staffManager",
+  },
+  {
+    number: "06",
+    category: "INTERNAL SUPPORT",
+    title: "Staff Tickets",
+    description:
+      "Review internal staff requests, respond to inquiries and manage ticket statuses.",
+    href: "/team-hub/staff-tickets",
+    access: "staffManager",
+  },
+];
+
+const OWNER_CARDS: HubCard[] = [
+  {
+    number: "07",
+    category: "OWNER TOOLS",
+    title: "Feedback Inbox",
+    description:
+      "Review confidential feedback submissions, manage their status and maintain internal notes.",
+    href: "/team-hub/feedback-inbox",
+    access: "owner",
+    badge: "OWNER ONLY",
+  },
+];
+
+function FeatureCard({ card }: { card: HubCard }) {
   return (
-    <a href={item.href} className={styles.card}>
-      <span className={styles.number}>{number}</span>
-      <h3>{item.title}</h3>
-      <p>{item.description}</p>
-      <span className={styles.open}>Open section <span aria-hidden="true">→</span></span>
+    <a href={card.href} className={styles.card}>
+      <div className={styles.cardTop}>
+        <span className={styles.cardNumber}>{card.number}</span>
+
+        {card.badge && (
+          <span className={styles.cardBadge}>{card.badge}</span>
+        )}
+
+        <span className={styles.cardArrow}>↗</span>
+      </div>
+
+      <span className={styles.cardCategory}>{card.category}</span>
+
+      <h3>{card.title}</h3>
+
+      <p>{card.description}</p>
+
+      <span className={styles.cardAction}>
+        Open section <span>→</span>
+      </span>
     </a>
+  );
+}
+
+function CardGroup({
+  title,
+  description,
+  cards,
+  label,
+}: {
+  title: string;
+  description: string;
+  cards: HubCard[];
+  label: string;
+}) {
+  if (cards.length === 0) return null;
+
+  return (
+    <section className={styles.group}>
+      <div className={styles.groupHeader}>
+        <div>
+          <span className={styles.groupLabel}>{label}</span>
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+
+        <span className={styles.groupCount}>
+          {String(cards.length).padStart(2, "0")} SECTIONS
+        </span>
+      </div>
+
+      <div className={styles.grid}>
+        {cards.map((card) => (
+          <FeatureCard key={card.number} card={card} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TeamHubContent({ user }: { user: DiscordSessionUser }) {
+  const personalCards = PERSONAL_CARDS.filter((card) =>
+    hasPortalAccess(user.stakRole, card.access),
+  );
+
+  const managementCards = MANAGEMENT_CARDS.filter((card) =>
+    hasPortalAccess(user.stakRole, card.access),
+  );
+
+  const ownerCards = OWNER_CARDS.filter((card) =>
+    hasPortalAccess(user.stakRole, card.access),
+  );
+
+  const totalSections =
+    personalCards.length +
+    managementCards.length +
+    ownerCards.length;
+
+  return (
+    <main className={styles.page}>
+      <section className={styles.heading}>
+        <div className={styles.headingContent}>
+          <span className={styles.eyebrow}>
+            STAK INTERNAL PLATFORM
+          </span>
+
+          <h1>
+            Team <span>Hub</span>
+          </h1>
+
+          <p>
+            Your central workspace for staff information,
+            internal communication and team administration.
+          </p>
+        </div>
+
+        <div className={styles.headingStatus}>
+          <span className={styles.statusDot} />
+          STAFF WORKSPACE
+        </div>
+      </section>
+
+      <section className={styles.overview}>
+        <div>
+          <span className={styles.overviewLabel}>
+            WORKSPACE OVERVIEW
+          </span>
+
+          <h2>Your staff workspace</h2>
+
+          <p>
+            Access your personal staff functions and,
+            depending on your permissions, additional
+            management tools.
+          </p>
+        </div>
+
+        <div className={styles.overviewStat}>
+          <strong>{String(totalSections).padStart(2, "0")}</strong>
+          <span>AVAILABLE SECTIONS</span>
+        </div>
+      </section>
+
+      <CardGroup
+        label="PERSONAL WORKSPACE"
+        title="My Staff Area"
+        description="Personal information and internal staff functions."
+        cards={personalCards}
+      />
+
+      <CardGroup
+        label="MANAGEMENT TOOLS"
+        title="Staff Administration"
+        description="Tools for maintaining and managing the STAK staff team."
+        cards={managementCards}
+      />
+
+      <CardGroup
+        label="OWNER ACCESS"
+        title="Administrative Overview"
+        description="Restricted functions for the Owner."
+        cards={ownerCards}
+      />
+
+      <section className={styles.information}>
+        <div className={styles.informationIcon}>i</div>
+
+        <div>
+          <strong>Access and confidentiality</strong>
+
+          <p>
+            Available sections depend on your current STAK
+            Discord role. Personal staff information and
+            confidential submissions are only accessible
+            to authorized users.
+          </p>
+        </div>
+      </section>
+
+      <footer className={styles.footer}>
+        <span>STAK MODERATION CENTER</span>
+        <span>TEAM HUB</span>
+      </footer>
+    </main>
   );
 }
 
 export default function TeamHubPage() {
   return (
     <PortalShell access="staff">
-      {(user) => {
-        const personal = ITEMS.filter((item) => item.group === "Personal workspace" && hasPortalAccess(user.stakRole, item.access));
-        const management = ITEMS.filter((item) => item.group === "Management tools" && hasPortalAccess(user.stakRole, item.access));
-        const owner = ITEMS.filter((item) => item.group === "Owner tools" && hasPortalAccess(user.stakRole, item.access));
-
-        return (
-          <>
-            <section className={styles.heading}>
-              <span className={styles.eyebrow}>STAFF WORKSPACE</span>
-              <h1>Team Hub<span>.</span></h1>
-              <p>Your central place for team information, personal staff tools and management functions.</p>
-            </section>
-
-            <section className={styles.group}>
-              <h2>Personal workspace</h2>
-              <div className={styles.grid}>
-                {personal.map((item, index) => <Card item={item} number={`0${index + 1}`} key={item.title} />)}
-              </div>
-            </section>
-
-            {management.length > 0 && (
-              <section className={styles.group}>
-                <h2>Management tools</h2>
-                <div className={styles.grid}>
-                  {management.map((item, index) => <Card item={item} number={`0${index + 1}`} key={item.title} />)}
-                </div>
-              </section>
-            )}
-
-            {owner.length > 0 && (
-              <section className={styles.group}>
-                <h2>Owner tools</h2>
-                <div className={styles.grid}>
-                  {owner.map((item, index) => <Card item={item} number={`0${index + 1}`} key={item.title} />)}
-                </div>
-              </section>
-            )}
-          </>
-        );
-      }}
+      {(user) => <TeamHubContent user={user} />}
     </PortalShell>
   );
 }
