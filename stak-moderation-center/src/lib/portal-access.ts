@@ -46,7 +46,11 @@ export function hasMinimumRole(
   const userPriority = ROLE_PRIORITY.indexOf(role);
   const minimumPriority = ROLE_PRIORITY.indexOf(minimumRole);
 
-  return userPriority !== -1 && minimumPriority !== -1 && userPriority <= minimumPriority;
+  return (
+    userPriority !== -1 &&
+    minimumPriority !== -1 &&
+    userPriority <= minimumPriority
+  );
 }
 
 export function hasPortalAccess(
@@ -56,16 +60,22 @@ export function hasPortalAccess(
   switch (access) {
     case "any":
       return Boolean(role);
+
     case "staff":
       return isStaffRole(role);
+
     case "community":
       return role === "community-member";
+
     case "trailModerator":
       return hasMinimumRole(role, "trail-moderator");
+
     case "staffManager":
       return hasMinimumRole(role, "staff-manager");
+
     case "owner":
       return role === "owner";
+
     default:
       return false;
   }
