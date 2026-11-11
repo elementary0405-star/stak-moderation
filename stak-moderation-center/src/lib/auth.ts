@@ -13,13 +13,13 @@ export type DiscordSessionUser = {
 };
 
 type DiscordSessionRow = {
-  id: string;
   discord_user_id: string;
   username: string;
   global_name: string | null;
   avatar: string | null;
   stak_role: StakRole;
   expires_at: string;
+  role_checked_at: string | null;
 };
 
 function generateToken(): string {
@@ -87,9 +87,10 @@ export async function createDiscordSession(
       avatar,
       stak_role,
       token_hash,
-      expires_at
+      expires_at,
+      role_checked_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
     .bind(
       sessionId,
@@ -99,7 +100,8 @@ export async function createDiscordSession(
       user.avatar,
       user.stakRole,
       tokenHash,
-      expiresAt
+      expiresAt,
+      new Date().toISOString()
     )
     .run();
 
@@ -109,9 +111,15 @@ export async function createDiscordSession(
   };
 }
 
-export async function getDiscordSession(
+export type DiscordSessionRecord = {
+  tokenHash: string;
+  roleCheckedAt: string | null;
+  user: DiscordSessionUser;
+};
+
+export async function getDiscordSessionRecord(
   request: Request
-): Promise<DiscordSessionUser | null> {
+): Promise<DiscordSessionRecord | null> {
   const token = getCookie(request, SESSION_COOKIE_NAME);
 
   if (!token) {
@@ -127,7 +135,8 @@ export async function getDiscordSession(
       global_name,
       avatar,
       stak_role,
-      expires_at
+      expires_at,
+      role_checked_at
     FROM discord_sessions
     WHERE token_hash = ?
       AND expires_at > ?
@@ -141,12 +150,45 @@ export async function getDiscordSession(
   }
 
   return {
-    discordUserId: session.discord_user_id,
-    username: session.username,
-    globalName: session.global_name,
-    avatar: session.avatar,
-    stakRole: session.stak_role,
+    tokenHash,
+    roleCheckedAt: session.role_checked_at,
+    user: {
+      discordUserId: session.discord_user_id,
+      username: session.username,
+      globalName: session.global_name,
+      avatar: session.avatar,
+      stakRole: session.stak_role,
+    },
   };
+}
+
+export async function getDiscordSession(
+  request: Request
+): Promise<DiscordSessionUser | null> {
+  const record = await getDiscordSessionRecord(request);
+  return record?.user ?? null;
+}
+
+export async function updateDiscordSessionRole(
+  tokenHash: string,
+  stakRole: StakRole
+): Promise<void> {
+  await env.DB.prepare(`
+    UPDATE discord_sessions
+    SET stak_role = ?, role_checked_at = ?
+    WHERE token_hash = ?
+  `)
+    .bind(stakRole, new Date().toISOString(), tokenHash)
+    .run();
+}
+
+export async function deleteDiscordSessionByHash(tokenHash: string): Promise<void> {
+  await env.DB.prepare(`
+    DELETE FROM discord_sessions
+    WHERE token_hash = ?
+  `)
+    .bind(tokenHash)
+    .run();
 }
 
 export async function deleteDiscordSession(

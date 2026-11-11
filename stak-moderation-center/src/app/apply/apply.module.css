@@ -1,0 +1,40 @@
+.hero { max-width: 780px; margin-bottom: 33px; }
+.eyebrow { color: #80b2e8; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
+.hero h1 { margin: 17px 0 12px; font-size: clamp(35px, 5vw, 53px); line-height: 1.08; letter-spacing: -2px; }
+.hero h1 span { color: #8cbbed; }
+.hero p { color: #a5b3c6; font-size: 14px; line-height: 1.8; }
+.panel,.locked,.success,.form { padding: 27px; border: 1px solid #2a3b51; border-radius: 9px; background: #101a28; }
+.locked { border-color: #84434c; background: #28171d; }
+.locked strong { color: #ffc1c7; font-size: 15px; }
+.locked p { max-width: 750px; color: #c4aeb3; font-size: 12px; line-height: 1.7; }
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 43px; padding: 0 18px; border: 1px solid #527eaa; border-radius: 5px; background: #315b84; color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.button:disabled { opacity: .45; cursor: not-allowed; }
+.form { padding: 0; overflow: hidden; }
+.formHeader { display: flex; justify-content: space-between; gap: 15px; padding: 18px 24px; border-bottom: 1px solid #28394f; color: #8fa8c7; font-size: 9px; font-weight: 800; letter-spacing: 1.4px; }
+.formHeader strong { color: #9dc4ee; }
+.formSection { padding: 25px; border-bottom: 1px solid #26364a; }
+.formSection h2 { margin: 0 0 7px; font-size: 19px; }
+.formSection > p { margin: 0 0 21px; color: #899bb1; font-size: 12px; line-height: 1.7; }
+.field { display: flex; flex-direction: column; gap: 8px; margin-top: 19px; }
+.field > span { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; color: #e5ebf3; font-size: 12px; font-weight: 650; line-height: 1.5; }
+.field em { color: #d5a86e; font-size: 8px; font-style: normal; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
+.field small { color: #8495aa; font-size: 10px; font-weight: 400; line-height: 1.6; }
+.input,.textarea { width: 100%; min-height: 43px; padding: 11px 12px; border: 1px solid #34485f; border-radius: 5px; outline: none; background: #0a121d; color: #edf3fa; font: inherit; font-size: 12px; }
+.input:focus,.textarea:focus { border-color: #72a7dd; box-shadow: 0 0 0 2px rgba(91,147,202,.14); }
+.textarea { min-height: 120px; resize: vertical; line-height: 1.65; }
+.optionList { display: flex; flex-wrap: wrap; gap: 11px; }
+.option { display: flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px solid #2d4057; border-radius: 5px; background: #0a121d; color: #b8c6d7; font-size: 11px; }
+.option input { accent-color: #76a8dc; }
+.deviceError,.error { margin-top: 14px; padding: 13px 14px; border: 1px solid #84434c; border-radius: 6px; background: #30171d; color: #ffc1c7; font-size: 11px; line-height: 1.65; }
+.deviceSuccess { margin-top: 13px; padding: 11px 13px; border: 1px solid #326b59; border-radius: 6px; background: #10271f; color: #a7e6ca; font-size: 11px; }
+.submitArea { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding: 22px 25px; }
+.submitArea p { max-width: 600px; margin: 0; color: #7f90a5; font-size: 10px; line-height: 1.7; }
+.honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.success { border-color: #326b59; background: #10271f; }
+.success h2 { margin: 15px 0 8px; font-size: 25px; }
+.success p { color: #a4cbbb; font-size: 12px; line-height: 1.7; }
+.reference { display: inline-block; margin: 10px 0; padding: 12px 15px; border: 1px solid #3f876b; border-radius: 5px; color: #d1ffeb; font-size: 17px; letter-spacing: 1.5px; }
+@media (max-width: 650px) { .formSection { padding: 20px; } .submitArea { align-items: stretch; flex-direction: column; } .submitArea .button { width: 100%; } .locked,.success { padding: 21px; } }
+.turnstileBlock { margin: 18px 25px 0; padding: 14px; border: 1px solid #2c4057; border-radius: 6px; background: #0c1521; }
+.turnstileBlock > span { display: block; margin-bottom: 10px; color: #80a8d2; font-size: 8px; font-weight: 800; letter-spacing: 1.4px; }
+.turnstileBlock small { display: block; margin-top: 8px; color: #7e90a6; font-size: 9px; }

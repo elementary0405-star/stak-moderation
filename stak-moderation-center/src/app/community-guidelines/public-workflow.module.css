@@ -1,0 +1,29 @@
+.hero { max-width: 780px; margin-bottom: 34px; }
+.eyebrow,.panelLabel { color: #80b2e8; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
+.hero h1 { margin: 17px 0 12px; font-size: clamp(35px, 5vw, 53px); line-height: 1.08; letter-spacing: -2px; }
+.hero h1 span { color: #8cbbed; }
+.hero p,.intro { color: #a5b3c6; font-size: 14px; line-height: 1.8; }
+.panel,.acceptance,.notice { margin-top: 20px; padding: 27px; border: 1px solid #2a3b51; border-radius: 9px; background: #101a28; }
+.panelTop { display: flex; justify-content: space-between; gap: 15px; color: #8299b7; font-size: 9px; font-weight: 800; letter-spacing: 1.2px; }
+.panel h2,.acceptance h2 { margin: 14px 0 9px; font-size: 21px; }
+.intro { margin: 0 0 20px; }
+.policyText { white-space: pre-wrap; overflow-wrap: anywhere; color: #b2bfd0; font-size: 13px; line-height: 1.85; }
+.acceptance > p { max-width: 760px; color: #8f9fb3; font-size: 12px; line-height: 1.7; }
+.checkList { display: grid; gap: 10px; margin: 22px 0; }
+.checkItem { display: flex; align-items: flex-start; gap: 13px; padding: 15px; border: 1px solid #293b52; border-radius: 6px; background: #0c1420; cursor: pointer; }
+.checkItem input { width: 17px; height: 17px; margin-top: 2px; accent-color: #75a8df; flex: 0 0 auto; }
+.checkItem span { display: flex; flex-direction: column; gap: 5px; }
+.checkItem strong { color: #e7edf5; font-size: 13px; font-weight: 650; line-height: 1.55; }
+.checkItem small { color: #8c9bb0; font-size: 11px; line-height: 1.6; }
+.checkItem em { color: #7399c3; font-size: 8px; font-style: normal; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+.primaryButton,.secondaryButton { display: inline-flex; align-items: center; justify-content: center; min-height: 43px; padding: 0 18px; border: 1px solid #527eaa; border-radius: 5px; background: #315b84; color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.primaryButton:disabled { opacity: .45; cursor: not-allowed; }
+.secondaryButton { margin-top: 16px; background: transparent; color: #a9c9eb; }
+.notice { border-color: #6d5535; background: #211b12; }
+.notice strong { color: #f0d4a4; }
+.notice p { color: #c4b69e; font-size: 13px; line-height: 1.7; }
+.error { margin: 18px 0; padding: 14px 16px; border: 1px solid #84434c; border-radius: 6px; background: #30171d; color: #ffc1c7; font-size: 12px; line-height: 1.6; }
+.success { margin: 16px 0; padding: 13px 15px; border: 1px solid #326b59; border-radius: 6px; background: #10271f; color: #a7e6ca; font-size: 12px; line-height: 1.6; }
+.smallNote { margin-top: 15px; color: #74869c; font-size: 10px; line-height: 1.7; }
+.continueLink { display: inline-block; margin-top: 14px; color: #a8cff5; font-size: 13px; font-weight: 700; text-decoration: none; }
+@media (max-width: 640px) { .panel,.acceptance,.notice { padding: 20px; } .panelTop { flex-direction: column; } }

@@ -1,0 +1,1 @@
+import AccessGate from "@/components/portal/AccessGate";import StaffWorkspace from "@/components/portal/StaffWorkspace";export default function StaffRecords(){return <AccessGate minimumRole="staff-manager"><StaffWorkspace kind="directory"/></AccessGate>}

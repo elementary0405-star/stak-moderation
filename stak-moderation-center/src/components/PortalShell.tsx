@@ -168,6 +168,7 @@ export default function PortalShell({
             <a href="/team-hub">Team Hub</a>
             <a href="/cases-records">Cases &amp; Records</a>
             <a href="/staff-resources">Staff Resources</a>
+            {hasPortalAccess(user.stakRole, "staffManager") && <a href="/team-hub/applications">Applications</a>}
             {hasPortalAccess(user.stakRole, "trailModerator") && (
               <a href="/staff-training">Staff Training</a>
             )}

@@ -75,11 +75,20 @@ const MANAGEMENT_CARDS: HubCard[] = [
     href: "/team-hub/staff-tickets",
     access: "staffManager",
   },
+  {
+    number: "07",
+    category: "RECRUITMENT",
+    title: "Staff Applications",
+    description:
+      "Review applicant submissions, maintain the form and publish versioned staff policies.",
+    href: "/team-hub/applications",
+    access: "staffManager",
+  },
 ];
 
 const OWNER_CARDS: HubCard[] = [
   {
-    number: "07",
+    number: "08",
     category: "OWNER TOOLS",
     title: "Feedback Inbox",
     description:

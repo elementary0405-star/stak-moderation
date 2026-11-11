@@ -339,19 +339,27 @@ export default function HomePage() {
             </span>
           </a>
 
-          <a
-            href="/community-guidelines"
-            className={styles.featureCard}
-          >
-            <span className={styles.featureNumber}>04</span>
-            <h3>Community Guidelines</h3>
-            <p>
-              Find the standards and rules that apply to
-              the STAK community.
-            </p>
-            <span className={styles.featureLink}>
-              Explore section →
-            </span>
+        </div>
+      </section>
+
+      <section className={styles.publicAccess} aria-labelledby="public-access-heading">
+        <div className={styles.publicAccessHeading}>
+          <span className={styles.sectionEyebrow}>PUBLIC ACCESS</span>
+          <h2 id="public-access-heading">Interested in joining STAK?</h2>
+          <p>Review the published standards first. When recruitment is open, you can then submit your application.</p>
+        </div>
+        <div className={styles.publicAccessGrid}>
+          <a href="/apply" className={styles.publicAccessCard}>
+            <span className={styles.publicAccessNumber}>01 · APPLICATION</span>
+            <h3>Staff Application</h3>
+            <p>Check the eligibility requirements and complete the staff application when submissions are enabled.</p>
+            <span className={styles.publicAccessLink}>Open application →</span>
+          </a>
+          <a href="/community-guidelines" className={styles.publicAccessCard}>
+            <span className={styles.publicAccessNumber}>02 · GUIDELINES</span>
+            <h3>Guidelines &amp; Acknowledgements</h3>
+            <p>Read the current standards and individually confirm every required statement before applying.</p>
+            <span className={styles.publicAccessLink}>Read guidelines →</span>
           </a>
         </div>
       </section>

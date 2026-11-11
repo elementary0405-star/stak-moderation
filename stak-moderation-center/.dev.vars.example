@@ -1,0 +1,6 @@
+# Cloudflare Worker variables (do not place real secrets in this file)
+# DISCORD_CLIENT_ID=
+# DISCORD_REDIRECT_URI=https://YOUR_DOMAIN/api/auth/discord/callback
+# MOODLE_COURSE_URL=https://YOUR_GNOMIO_SUBDOMAIN.gnomio.com/course/view.php?id=COURSE_ID
+
+# Store DISCORD_CLIENT_SECRET and DISCORD_BOT_TOKEN as Cloudflare secrets, not in this file.

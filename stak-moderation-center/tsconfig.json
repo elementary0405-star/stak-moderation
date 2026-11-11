@@ -32,6 +32,10 @@
   ],
   "exclude": [
     "node_modules",
-    ".next"
+    ".next",
+    ".vinext",
+    "archive",
+    "stak-moderation-center",
+    "stak moderation-center"
   ]
 }

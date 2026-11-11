@@ -1,0 +1,221 @@
+/// <reference path="../../../../../.cloudflare/types/index.d.ts" />
+// 
+import { env } from "cloudflare:workers";
+import { getFreshDiscordSession } from "../../../../lib/discord-auth";
+import { hasPortalAccess } from "../../../../lib/portal-access";
+import { isSameOriginRequest } from "@/lib/application-public";
+
+const WARNING_TYPES = ["notice", "warning", "final_warning"] as const;
+
+const MANAGEMENT_ROLES = [
+  "staff-manager",
+  "management",
+  "co-owner",
+  "owner",
+];
+
+function json(data: unknown, status = 200): Response {
+  return Response.json(data, {
+    status,
+    headers: { "Cache-Control": "no-store" },
+  });
+}
+
+async function authorize(request: Request) {
+  const user = await getFreshDiscordSession(request);
+
+  if (!user) {
+    return { user: null, response: json({ error: "Authentication required." }, 401) };
+  }
+
+  if (!hasPortalAccess(user.stakRole, "staffManager")) {
+    return { user: null, response: json({ error: "Access denied." }, 403) };
+  }
+
+  return { user, response: null };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export async function GET(request: Request): Promise<Response> {
+  try {
+    const auth = await authorize(request);
+    if (!auth.user) return auth.response!;
+
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status") ?? "all";
+    const search = (url.searchParams.get("search") ?? "").trim();
+
+    const conditions: string[] = [];
+    const values: (string | number)[] = [];
+
+    if (status !== "all") {
+      conditions.push("w.status = ?");
+      values.push(status);
+    }
+
+    if (search) {
+      conditions.push(`
+        (
+          p.username LIKE ?
+          OR p.global_name LIKE ?
+          OR w.discord_user_id LIKE ?
+          OR w.reason LIKE ?
+        )
+      `);
+
+      const term = `%${search}%`;
+      values.push(term, term, term, term);
+    }
+
+    const where = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    const result = await env.DB.prepare(`
+      SELECT
+        w.id,
+        w.discord_user_id AS discordUserId,
+        p.username,
+        p.global_name AS globalName,
+        w.warning_type AS warningType,
+        w.reason,
+        w.internal_notes AS internalNotes,
+        w.issued_by_discord_id AS issuedByDiscordId,
+        w.status,
+        w.resolved_at AS resolvedAt,
+        w.resolved_by_discord_id AS resolvedByDiscordId,
+        w.resolution_reason AS resolutionReason,
+        w.created_at AS createdAt,
+        w.updated_at AS updatedAt
+      FROM staff_warnings w
+      LEFT JOIN staff_profiles p
+        ON p.discord_user_id = w.discord_user_id
+      ${where}
+      ORDER BY w.created_at DESC
+      LIMIT 200
+    `).bind(...values).all();
+
+    return json({ warnings: result.results ?? [] });
+  } catch (error) {
+    console.error("[staff-warnings-get]", error);
+    return json({ error: "Unable to load staff warnings." }, 500);
+  }
+}
+
+export async function POST(request: Request): Promise<Response> {
+  if (!isSameOriginRequest(request)) return json({ error: "Cross-origin request rejected." }, 403);
+  try {
+    const auth = await authorize(request);
+    if (!auth.user) return auth.response!;
+
+    let body: unknown;
+
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: "Invalid request body." }, 400);
+    }
+
+    if (!isObject(body)) {
+      return json({ error: "Invalid request body." }, 400);
+    }
+
+    const discordUserId =
+      typeof body.discordUserId === "string"
+        ? body.discordUserId.trim()
+        : "";
+
+    const warningType =
+      typeof body.warningType === "string"
+        ? body.warningType
+        : "";
+
+    const reason =
+      typeof body.reason === "string"
+        ? body.reason.trim()
+        : "";
+
+    const internalNotes =
+      typeof body.internalNotes === "string"
+        ? body.internalNotes.trim()
+        : "";
+
+    if (!/^\d{17,20}$/.test(discordUserId)) {
+      return json({ error: "Enter a valid Discord user ID." }, 400);
+    }
+
+    if (!WARNING_TYPES.includes(warningType as typeof WARNING_TYPES[number])) {
+      return json({ error: "Select a valid warning type." }, 400);
+    }
+
+    if (reason.length < 10 || reason.length > 3000) {
+      return json({ error: "The reason must contain between 10 and 3000 characters." }, 400);
+    }
+
+    if (internalNotes.length > 3000) {
+      return json({ error: "Internal notes are too long." }, 400);
+    }
+
+    const profile = await env.DB.prepare(`
+      SELECT discord_user_id
+      FROM staff_profiles
+      WHERE discord_user_id = ?
+    `).bind(discordUserId).first();
+
+    if (!profile) {
+      return json({ error: "No staff profile exists for this Discord ID." }, 404);
+    }
+
+    const id = crypto.randomUUID();
+
+    await env.DB.prepare(`
+      INSERT INTO staff_warnings (
+        id,
+        discord_user_id,
+        warning_type,
+        reason,
+        internal_notes,
+        issued_by_discord_id,
+        status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, 'active')
+    `).bind(
+      id,
+      discordUserId,
+      warningType,
+      reason,
+      internalNotes || null,
+      auth.user.discordUserId,
+    ).run();
+
+    await env.DB.prepare(`
+      INSERT INTO audit_logs (
+        id,
+        actor_discord_id,
+        entity_type,
+        entity_id,
+        action,
+        new_values,
+        reason
+      )
+      VALUES (?, ?, 'staff_warning', ?, 'created', ?, ?)
+    `).bind(
+      crypto.randomUUID(),
+      auth.user.discordUserId,
+      id,
+      JSON.stringify({ discordUserId, warningType, status: "active" }),
+      reason,
+    ).run();
+
+    return json({
+      message: "Staff warning created.",
+      id,
+    }, 201);
+  } catch (error) {
+    console.error("[staff-warnings-create]", error);
+    return json({ error: "Unable to create staff warning." }, 500);
+  }
+}

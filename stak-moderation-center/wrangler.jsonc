@@ -4,6 +4,10 @@
   "compatibility_date": "2026-11-08",
   "compatibility_flags": ["nodejs_compat"],
   "main": "vinext/server/app-router-entry",
+  "vars": {
+    "MOODLE_COURSE_URL": "",
+    "TURNSTILE_SITE_KEY": ""
+  },
   "assets": {
     "not_found_handling": "none"
   },
@@ -11,7 +15,8 @@
     {
       "binding": "DB",
       "database_name": "stak-moderation-db",
-      "database_id": "e2e0bcd1-d65c-45ae-901c-3e8d9ee87543"
+      "database_id": "e2e0bcd1-d65c-45ae-901c-3e8d9ee87543",
+      "migrations_dir": "migrations"
     }
   ]
 }

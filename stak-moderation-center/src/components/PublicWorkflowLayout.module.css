@@ -1,0 +1,15 @@
+.page { min-height: 100vh; color: #f4f6fa; background: #080d16; }
+.header { min-height: 82px; padding: 0 7%; display: flex; align-items: center; justify-content: space-between; gap: 26px; border-bottom: 1px solid #1d2838; background: rgba(8,13,22,.96); }
+.brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.brand img { display: block; width: 105px; height: auto; max-height: 45px; object-fit: contain; }
+.brand span { display: flex; flex-direction: column; gap: 2px; }
+.brand strong { font-size: 13px; letter-spacing: 2px; }
+.brand small { color: #8295ad; font-size: 8px; letter-spacing: 1.5px; }
+.nav { display: flex; align-items: center; gap: 25px; }
+.nav a { color: #a6b3c4; font-size: 12px; text-decoration: none; transition: color .15s ease; }
+.nav a:hover,.nav a.active { color: #fff; }
+.nav .signIn { padding: 11px 15px; border: 1px solid #385575; border-radius: 5px; color: #c2dcf8; }
+.content { width: min(1040px, 88%); margin: 0 auto; padding: 55px 0 90px; }
+.footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px 7%; border-top: 1px solid #1d2838; color: #74849a; font-size: 10px; letter-spacing: .7px; }
+.footer span { color: #596b82; }
+@media (max-width: 700px) { .header { padding: 15px 5%; align-items: flex-start; flex-direction: column; } .nav { width: 100%; gap: 18px; flex-wrap: wrap; } .content { width: 90%; padding-top: 35px; } .footer { padding: 18px 5%; flex-direction: column; } }

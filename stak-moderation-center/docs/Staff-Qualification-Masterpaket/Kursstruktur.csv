@@ -1,0 +1,11 @@
+﻿Nr;Modul;Zielgruppe;Inhalte;Moodle-Elemente (Vorschlag);Zeit (Pilotwert);Nachweis
+0;Start here;Alle;Ziel, Ablauf, Fortschritt, Hilfe, Kursnavigation;Page + Book/Startkapitel;5–10 min;Gelesen/verstanden
+1;STAK verstehen;Alle;Organisation, Scope, Projekte, Ansprechpartner;Book + Mini-Quiz;15–20 min;Wissenscheck
+2;Rollen & Befugnisse;Alle;Trial Mod, Mod, Staff Manager, Management, Eskalation, Interessenkonflikte;Book + Matching/MC;20–25 min;Wissenscheck
+3;Community Rules;Alle;Regelbereiche, Kritik, Konflikt, Hate, sensitive content, privacy;Book + Szenarioquiz;25–35 min;Szenariofragen
+4;Moderation & Beweise;Moderator + Grundwissen alle;Prüfablauf, Kontext, Evidenz, Maßnahmen, Doku, Eskalation;Book + Quiz + Fall;25–35 min;Fallanalyse
+5;Tickets & Falltypen;Rollenabhängig;General Support, Player Report, Unban Request, Management Contact, Staff Report;Book + Matching + MC;30–40 min;Workflow-Quiz
+6;Interne Systeme & Alltag;Alle/rollenspezifisch;Staff Overview, Handbook, My Workspace, Absence, Player Records, Logs, Announcements;Book + Short Answer/MC;15–20 min;Wissenscheck
+7;OPSEC & Sicherheit;Alle;Vertraulichkeit, Need-to-know, 2FA, Daten, Offenlegung;Book + Szenarioquiz;15–20 min;Sicherheitsfragen
+8;Rollenpfad;Je Rolle;Trial Mod, Moderator, Staff Manager, Management Aufgaben;rollenbezogene Books + Assignment;30–60 min;Rollenprüfung
+9;Praxis & Abschluss;Alle mit Rollenvariante;3–5 Praxisfälle, Abschlussprüfung, Trainerfreigabe;Assignment + Quiz;30–60 min;Bestehen + Trainercheck

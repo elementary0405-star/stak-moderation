@@ -42,6 +42,21 @@ type Evidence = {
   createdAt: string;
 };
 
+type ApiPayload = Record<string, unknown>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function readApiPayload(response: Response): Promise<ApiPayload> {
+  const value: unknown = await response.json();
+  return isRecord(value) ? value : {};
+}
+
+function getApiError(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
 const SANCTION_LABELS: Record<string, string> = {
   permanent_ban: "Permanenter Bann",
   temporary_ban: "Temporärer Bann",
@@ -155,15 +170,15 @@ export default function CaseDetailPage() {
         { cache: "no-store" },
       );
 
-      const payload = await response.json();
+      const payload = await readApiPayload(response);
 
       if (!response.ok) {
         throw new Error(
-          payload.error || "Der Moderationsfall konnte nicht geladen werden.",
+          getApiError(payload.error, "Der Moderationsfall konnte nicht geladen werden."),
         );
       }
 
-      const rawCase = payload.case ?? payload;
+      const rawCase = isRecord(payload.case) ? payload.case : payload;
 
       const normalized = normalizeCase(
         rawCase as Record<string, unknown>,
@@ -212,11 +227,11 @@ export default function CaseDetailPage() {
         },
       );
 
-      const payload = await response.json();
+      const payload = await readApiPayload(response);
 
       if (!response.ok) {
         throw new Error(
-          payload.error || "Der Moderationsfall konnte nicht gespeichert werden.",
+          getApiError(payload.error, "Der Moderationsfall konnte nicht gespeichert werden."),
         );
       }
 
@@ -253,11 +268,11 @@ export default function CaseDetailPage() {
         }),
       });
 
-      const payload = await response.json();
+      const payload = await readApiPayload(response);
 
       if (!response.ok) {
         throw new Error(
-          payload.error || "Der Nachweis konnte nicht hinzugefügt werden.",
+          getApiError(payload.error, "Der Nachweis konnte nicht hinzugefügt werden."),
         );
       }
 

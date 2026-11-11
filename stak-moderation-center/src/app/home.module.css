@@ -656,3 +656,24 @@
     grid-column: 1;
   }
 }
+.publicAccess {
+  display: grid;
+  grid-template-columns: minmax(230px, .72fr) minmax(0, 1.5fr);
+  gap: 34px;
+  align-items: center;
+  padding: 62px 10%;
+  border-top: 1px solid #233247;
+  border-bottom: 1px solid #233247;
+  background: #0b1421;
+}
+.publicAccessHeading h2 { margin: 12px 0 9px; color: #f4f7fb; font-size: 27px; letter-spacing: -1px; line-height: 1.2; }
+.publicAccessHeading p { margin: 0; color: #91a1b5; font-size: 12px; line-height: 1.8; }
+.publicAccessGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
+.publicAccessCard { min-height: 185px; display: flex; flex-direction: column; align-items: flex-start; padding: 20px; border: 1px solid #2d4057; border-radius: 7px; background: #101a28; color: #f4f7fb; text-decoration: none; transition: .2s ease; }
+.publicAccessCard:hover { transform: translateY(-3px); border-color: #548bc3; background: #142238; }
+.publicAccessNumber { color: #78a9df; font-size: 8px; font-weight: 800; letter-spacing: 1.3px; }
+.publicAccessCard h3 { margin: 17px 0 8px; font-size: 15px; }
+.publicAccessCard p { margin: 0; color: #91a1b5; font-size: 10px; line-height: 1.75; }
+.publicAccessLink { margin-top: auto; padding-top: 16px; color: #8db9e9; font-size: 9px; font-weight: 800; }
+@media (max-width: 900px) { .publicAccess { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .publicAccess { padding: 45px 6%; } .publicAccessGrid { grid-template-columns: 1fr; } }
