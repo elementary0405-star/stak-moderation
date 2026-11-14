@@ -1,5 +1,3 @@
-/// <reference path="../../../../../.cloudflare/types/index.d.ts" />
-
 import { env } from "cloudflare:workers";
 import { getFreshDiscordSession } from "../../../../lib/discord-auth";
 import { hasPortalAccess } from "../../../../lib/portal-access";
@@ -172,14 +170,16 @@ export async function GET(request: Request): Promise<Response> {
         c.reason,
         c.notes,
 
-        c.status,
+        CASE WHEN c.status = 'lifted' OR EXISTS (
+          SELECT 1 FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted'
+        ) THEN 'lifted' ELSE c.status END AS status,
         c.started_at AS startedAt,
         c.duration_seconds AS durationSeconds,
         c.expires_at AS expiresAt,
 
-        c.lifted_at AS liftedAt,
-        c.lifted_by_discord_id AS liftedByDiscordId,
-        c.lifted_reason AS liftedReason,
+        COALESCE(c.lifted_at, (SELECT se.created_at FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS liftedAt,
+        COALESCE(c.lifted_by_discord_id, (SELECT se.actor_discord_id FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS liftedByDiscordId,
+        COALESCE(c.lifted_reason, (SELECT se.reason FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS liftedReason,
 
         c.created_by_discord_id AS createdByDiscordId,
         c.created_at AS createdAt,
@@ -214,7 +214,9 @@ export async function GET(request: Request): Promise<Response> {
 
         AND (
           ? = ''
-          OR c.status = ?
+          OR CASE WHEN c.status = 'lifted' OR EXISTS (
+            SELECT 1 FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted'
+          ) THEN 'lifted' ELSE c.status END = ?
         )
 
       ORDER BY c.created_at DESC
@@ -345,7 +347,8 @@ export async function PATCH(request: Request): Promise<Response> {
         sanction_type AS sanctionType,
         status,
         reason AS caseReason,
-        expires_at AS expiresAt
+        expires_at AS expiresAt,
+        EXISTS (SELECT 1 FROM sanction_events se WHERE se.case_id = cases.id AND se.event_type = 'lifted') AS hasLiftEvent
       FROM cases
       WHERE id = ?
       LIMIT 1
@@ -359,6 +362,7 @@ export async function PATCH(request: Request): Promise<Response> {
         status: string;
         caseReason: string;
         expiresAt: string | null;
+      hasLiftEvent: number;
       }>();
 
     if (!existingCase) {
@@ -375,7 +379,7 @@ export async function PATCH(request: Request): Promise<Response> {
       );
     }
 
-    if (existingCase.status !== "active") {
+    if (existingCase.status !== "active" || existingCase.hasLiftEvent) {
       return json(
         {
           error: "Only active sanctions can be lifted.",
@@ -387,24 +391,10 @@ export async function PATCH(request: Request): Promise<Response> {
 
     const liftedAt = new Date().toISOString();
 
-    const updateStatement = env.DB.prepare(`
-      UPDATE cases
-
-      SET
-        status = 'lifted',
-        lifted_at = ?,
-        lifted_by_discord_id = ?,
-        lifted_reason = ?,
-        updated_at = CURRENT_TIMESTAMP
-
-      WHERE id = ?
-        AND status = 'active'
-    `).bind(
-      liftedAt,
-      auth.user.discordUserId,
-      reason,
-      caseId,
-    );
+    const eventStatement = env.DB.prepare(`
+      INSERT INTO sanction_events (id, case_id, event_type, reason, actor_discord_id, created_at, details_json)
+      VALUES (?, ?, 'lifted', ?, ?, ?, '{}')
+    `).bind(crypto.randomUUID(), caseId, reason, auth.user.discordUserId, liftedAt);
 
     const auditStatement = env.DB.prepare(`
       INSERT INTO audit_logs (
@@ -432,12 +422,7 @@ export async function PATCH(request: Request): Promise<Response> {
       crypto.randomUUID(),
       auth.user.discordUserId,
       caseId,
-      JSON.stringify({
-        status: existingCase.status,
-        liftedAt: null,
-        liftedByDiscordId: null,
-        liftedReason: null,
-      }),
+      JSON.stringify({ status: existingCase.status, liftedAt: null, liftedByDiscordId: null, liftedReason: null }),
       JSON.stringify({
         status: "lifted",
         liftedAt,
@@ -448,7 +433,7 @@ export async function PATCH(request: Request): Promise<Response> {
     );
 
     await env.DB.batch([
-      updateStatement,
+      eventStatement,
       auditStatement,
     ]);
 
@@ -458,7 +443,7 @@ export async function PATCH(request: Request): Promise<Response> {
         case_number AS caseNumber,
         player_id AS playerId,
         sanction_type AS sanctionType,
-        status,
+        'lifted' AS status,
         reason,
         started_at AS startedAt,
         duration_seconds AS durationSeconds,

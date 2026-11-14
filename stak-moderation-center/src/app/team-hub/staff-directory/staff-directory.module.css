@@ -173,6 +173,20 @@
   font-size: 13px;
 }
 
+.memberLink {
+  display: block;
+  color: #e5edf8;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.memberLink:hover,
+.memberIdLink:hover {
+  color: #8bc2fa;
+  text-decoration: underline;
+}
+
 .member span {
   color: #a1aec0;
   font-size: 11px;
@@ -182,6 +196,8 @@
   color: #728198;
   font-size: 10px;
 }
+
+.memberIdLink { color: #91a8c3; text-decoration: none; }
 
 .role {
   display: inline-block;

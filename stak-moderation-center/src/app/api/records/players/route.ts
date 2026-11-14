@@ -1,5 +1,3 @@
-/// <reference path="../../../../../.cloudflare/types/index.d.ts" />
-
 import { getFreshDiscordSession } from "@/lib/discord-auth";
 import { hasPortalAccess } from "@/lib/portal-access";
 
@@ -118,10 +116,15 @@ export async function GET(request: Request): Promise<Response> {
       OR p.discord_name LIKE ?
       OR p.discord_id LIKE ?
       OR p.id LIKE ?
+      OR EXISTS (
+        SELECT 1 FROM player_identities pi
+        WHERE pi.player_id = p.id
+          AND (pi.game LIKE ? OR pi.game_player_id LIKE ? OR pi.game_player_name LIKE ?)
+      )
     )`);
 
     const searchValue = `%${search}%`;
-    values.push(searchValue, searchValue, searchValue, searchValue);
+    values.push(searchValue, searchValue, searchValue, searchValue, searchValue, searchValue, searchValue);
   }
 
   const whereClause =
@@ -156,6 +159,10 @@ export async function GET(request: Request): Promise<Response> {
         FROM cases c
         WHERE c.player_id = p.id
           AND c.status = 'active'
+          AND NOT EXISTS (
+            SELECT 1 FROM sanction_events se
+            WHERE se.case_id = c.id AND se.event_type = 'lifted'
+          )
       ) AS activeCaseCount
     FROM players p
     ${whereClause}
@@ -171,7 +178,7 @@ export async function GET(request: Request): Promise<Response> {
     .map((player) => (player as { id: string }).id)
     .filter(Boolean);
 
-  let identities: Record<string, unknown[]> = {};
+  const identities: Record<string, unknown[]> = {};
 
   if (playerIds.length > 0) {
     const placeholders = playerIds.map(() => "?").join(",");
@@ -253,73 +260,47 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const initialCaseInput = body.initialCase as
-    | InitialCase
-    | null
-    | undefined;
+  const initialCaseInput = body.initialCase && typeof body.initialCase === "object"
+    ? body.initialCase as InitialCase
+    : null;
 
-  if (!initialCaseInput || typeof initialCaseInput !== "object") {
-    return json(
-      {
-        error:
-          "Beim Anlegen eines Spielers muss ein erster Akteneintrag erstellt werden.",
-      },
-      400,
-    );
-  }
+  const sanctionType = initialCaseInput ? normalizeString(initialCaseInput.sanctionType) : null;
+  const reason = initialCaseInput ? normalizeString(initialCaseInput.reason) : null;
+  const caseNotes = initialCaseInput ? normalizeString(initialCaseInput.notes) : null;
+  const game = initialCaseInput ? normalizeString(initialCaseInput.game) : null;
+  const durationSeconds = initialCaseInput && typeof initialCaseInput.durationSeconds === "number"
+    ? initialCaseInput.durationSeconds
+    : null;
 
-  const sanctionType = normalizeString(initialCaseInput.sanctionType);
-  const reason = normalizeString(initialCaseInput.reason);
-  const caseNotes = normalizeString(initialCaseInput.notes);
-  const game = normalizeString(initialCaseInput.game);
-
-  const durationSeconds =
-    typeof initialCaseInput.durationSeconds === "number"
-      ? initialCaseInput.durationSeconds
-      : null;
-
-  if (!sanctionType || !isValidSanctionType(sanctionType)) {
-    return json(
-      { error: "Bitte wähle eine gültige Sanktionsart aus." },
-      400,
-    );
-  }
-
-  if (!reason) {
-    return json(
-      { error: "Bitte gib einen Grund für den Akteneintrag an." },
-      400,
-    );
-  }
-
-  if (
-    (sanctionType === "temporary_ban" || sanctionType === "timeout") &&
-    (!durationSeconds ||
-      !Number.isFinite(durationSeconds) ||
-      durationSeconds <= 0)
-  ) {
-    return json(
-      {
-        error:
-          "Für einen temporären Bann oder Timeout muss eine gültige Dauer angegeben werden.",
-      },
-      400,
-    );
+  if (initialCaseInput) {
+    if (!sanctionType || !isValidSanctionType(sanctionType)) {
+      return json({ error: "Bitte wähle eine gültige Sanktionsart aus." }, 400);
+    }
+    if (!reason) return json({ error: "Bitte gib einen Grund für den Akteneintrag an." }, 400);
+    if ((sanctionType === "temporary_ban" || sanctionType === "timeout") &&
+      (!durationSeconds || !Number.isFinite(durationSeconds) || durationSeconds <= 0)) {
+      return json({ error: "Für einen temporären Bann oder Timeout muss eine gültige Dauer angegeben werden." }, 400);
+    }
   }
 
   const identitiesInput = Array.isArray(body.identities)
     ? (body.identities as PlayerIdentityInput[])
     : [];
+  if (identitiesInput.length === 0) {
+    return json({ error: "Bitte gib mindestens eine Spielidentität mit Game Name und Player ID an." }, 400);
+  }
 
   const identities: {
     game: string;
     gamePlayerId: string;
     gamePlayerName: string | null;
   }[] = [];
+  const identityKeys = new Set<string>();
 
   for (const identity of identitiesInput) {
-    const identityGame = normalizeString(identity.game);
-    const gamePlayerId = normalizeString(identity.gamePlayerId);
+    if (!identity || typeof identity !== "object") return json({ error: "Eine Spielidentität ist ungültig." }, 400);
+    const identityGame = normalizeString(identity.game)?.normalize("NFKC") ?? null;
+    const gamePlayerId = normalizeString(identity.gamePlayerId)?.normalize("NFKC") ?? null;
     const gamePlayerName = normalizeString(identity.gamePlayerName);
 
     if (!identityGame || !gamePlayerId) {
@@ -331,36 +312,18 @@ export async function POST(request: Request): Promise<Response> {
         400,
       );
     }
+    if (identityGame.length > 100 || gamePlayerId.length > 150 || (gamePlayerName?.length ?? 0) > 150) {
+      return json({ error: "Game Name, Player ID oder In-Game-Name ist zu lang." }, 400);
+    }
+    const identityKey = `${identityGame.toLocaleLowerCase("en")}\u0000${gamePlayerId.toLocaleLowerCase("en")}`;
+    if (identityKeys.has(identityKey)) return json({ error: "Dieselbe Spielidentität wurde doppelt angegeben." }, 400);
+    identityKeys.add(identityKey);
 
     identities.push({
       game: identityGame,
       gamePlayerId,
       gamePlayerName,
     });
-  }
-
-  if (discordId) {
-    const existingDiscordPlayer = await env.DB.prepare(`
-      SELECT id, player_name AS playerName
-      FROM players
-      WHERE discord_id = ?
-      LIMIT 1
-    `)
-      .bind(discordId)
-      .first<{
-        id: string;
-        playerName: string;
-      }>();
-
-    if (existingDiscordPlayer) {
-      return json(
-        {
-          error: "Diese Discord-Kennung ist bereits einem Spieler zugeordnet.",
-          existingPlayer: existingDiscordPlayer,
-        },
-        409,
-      );
-    }
   }
 
   for (const identity of identities) {
@@ -371,8 +334,8 @@ export async function POST(request: Request): Promise<Response> {
         p.player_name AS playerName
       FROM player_identities pi
       INNER JOIN players p ON p.id = pi.player_id
-      WHERE pi.game = ?
-        AND pi.game_player_id = ?
+      WHERE lower(trim(pi.game)) = lower(?)
+        AND lower(trim(pi.game_player_id)) = lower(?)
       LIMIT 1
     `)
       .bind(identity.game, identity.gamePlayerId)
@@ -394,11 +357,11 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const playerId = generateId();
-  const caseId = generateId();
+  const caseId = initialCaseInput ? generateId() : null;
   const currentDate = new Date();
-  const year = currentDate.getFullYear();
+  const year = currentDate.getUTCFullYear();
 
-  const expiresAt =
+  const expiresAt = initialCaseInput &&
     durationSeconds !== null &&
     (sanctionType === "temporary_ban" || sanctionType === "timeout")
       ? new Date(
@@ -406,20 +369,14 @@ export async function POST(request: Request): Promise<Response> {
         ).toISOString()
       : null;
 
-  const caseNumberResult = await env.DB.prepare(`
-    SELECT
-      COALESCE(
-        MAX(CAST(substr(case_number, 11) AS INTEGER)),
-        0
-      ) AS lastNumber
-    FROM cases
-    WHERE case_number LIKE ?
-  `)
-    .bind(`STAK-${year}-%`)
-    .first<{ lastNumber: number }>();
-
-  const nextNumber = (caseNumberResult?.lastNumber ?? 0) + 1;
-  const caseNumber = `STAK-${year}-${String(nextNumber).padStart(5, "0")}`;
+  const caseNumberResult = initialCaseInput ? await env.DB.prepare(`
+    INSERT INTO case_counters (year, last_number) VALUES (?, 1)
+    ON CONFLICT(year) DO UPDATE SET last_number = last_number + 1
+    RETURNING last_number AS lastNumber
+  `).bind(year).first<{ lastNumber: number }>() : null;
+  const caseNumber = initialCaseInput && caseNumberResult
+    ? `STAK-${year}-${String(caseNumberResult.lastNumber).padStart(5, "0")}`
+    : null;
 
   const statements: D1PreparedStatement[] = [];
 
@@ -465,7 +422,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  statements.push(
+  if (initialCaseInput && caseId && caseNumber && sanctionType && reason) statements.push(
     env.DB.prepare(`
       INSERT INTO cases (
         id,
@@ -526,7 +483,7 @@ export async function POST(request: Request): Promise<Response> {
     ),
   );
 
-  statements.push(
+  if (initialCaseInput && caseId && caseNumber && sanctionType && reason) statements.push(
     env.DB.prepare(`
       INSERT INTO audit_logs (
         id,
@@ -581,7 +538,7 @@ export async function POST(request: Request): Promise<Response> {
         internalNotes,
         identities,
       },
-      case: {
+      case: initialCaseInput && caseId && caseNumber && sanctionType && reason ? {
         id: caseId,
         caseNumber,
         playerId,
@@ -593,7 +550,7 @@ export async function POST(request: Request): Promise<Response> {
         startedAt: currentDate.toISOString(),
         durationSeconds,
         expiresAt,
-      },
+      } : null,
     },
     201,
   );

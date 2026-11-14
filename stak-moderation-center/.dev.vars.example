@@ -1,6 +1,10 @@
-# Cloudflare Worker variables (do not place real secrets in this file)
-# DISCORD_CLIENT_ID=
-# DISCORD_REDIRECT_URI=https://YOUR_DOMAIN/api/auth/discord/callback
-# MOODLE_COURSE_URL=https://YOUR_GNOMIO_SUBDOMAIN.gnomio.com/course/view.php?id=COURSE_ID
+# Copy this file to .dev.vars for local use, then fill it in locally.
+# Never commit .dev.vars or put any values in this example file.
 
-# Store DISCORD_CLIENT_SECRET and DISCORD_BOT_TOKEN as Cloudflare secrets, not in this file.
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_REDIRECT_URI=http://localhost:3001/api/auth/discord/callback
+DISCORD_BOT_TOKEN=
+
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=

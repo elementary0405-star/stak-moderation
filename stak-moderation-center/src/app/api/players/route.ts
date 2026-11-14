@@ -18,6 +18,7 @@ type PlayerInput = {
   discordName?: unknown;
   discordId?: unknown;
   internalNotes?: unknown;
+  identities?: unknown;
 };
 
 function json(
@@ -314,26 +315,27 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    if (discordId) {
-      const existingPlayer = await env.DB.prepare(`
-        SELECT id, player_name
-        FROM players
-        WHERE discord_id = ?
-        LIMIT 1
-      `)
-        .bind(discordId)
-        .first<{ id: string; player_name: string }>();
-
-      if (existingPlayer) {
-        return json(
-          {
-            success: false,
-            error: "A player with this Discord ID already exists.",
-            existingPlayer,
-          },
-          409,
-        );
-      }
+    const rawIdentities = Array.isArray(input.identities) ? input.identities : [];
+    const identityKeys = new Set<string>();
+    const identities = rawIdentities.map((value) => {
+      if (!isRecord(value)) return null;
+      const game = typeof value.game === "string" ? value.game.trim().normalize("NFKC") : "";
+      const gamePlayerId = typeof value.gamePlayerId === "string" ? value.gamePlayerId.trim().normalize("NFKC") : "";
+      const gamePlayerName = typeof value.gamePlayerName === "string" ? value.gamePlayerName.trim() || null : null;
+      if (!game || game.length > 100 || !gamePlayerId || gamePlayerId.length > 150 || (gamePlayerName && gamePlayerName.length > 150)) return null;
+      const identityKey = `${game.toLocaleLowerCase("en")}\u0000${gamePlayerId.toLocaleLowerCase("en")}`;
+      if (identityKeys.has(identityKey)) return null;
+      identityKeys.add(identityKey);
+      return { game, gamePlayerId, gamePlayerName };
+    });
+    if (!identities.length || identities.some((identity) => identity === null)) {
+      return json({ success: false, error: "At least one valid Game Name and Player ID is required." }, 400);
+    }
+    for (const identity of identities) {
+      if (!identity) continue;
+      const existingIdentity = await env.DB.prepare(`SELECT pi.id, pi.player_id AS playerId, p.player_name AS playerName FROM player_identities pi JOIN players p ON p.id = pi.player_id WHERE lower(trim(pi.game)) = lower(?) AND lower(trim(pi.game_player_id)) = lower(?) LIMIT 1`)
+        .bind(identity.game, identity.gamePlayerId).first<{ id: string; playerId: string; playerName: string }>();
+      if (existingIdentity) return json({ success: false, error: "This normalized game identity is already registered.", existingPlayer: existingIdentity }, 409);
     }
 
     const playerId = crypto.randomUUID();
@@ -351,7 +353,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const now = new Date().toISOString();
 
-    await env.DB.batch([
+    const statements: D1PreparedStatement[] = [
       env.DB.prepare(`
         INSERT INTO players (
           id,
@@ -399,7 +401,13 @@ export async function POST(request: Request): Promise<Response> {
         }),
         now,
       ),
-    ]);
+    ];
+    for (const identity of identities) {
+      if (!identity) continue;
+      statements.push(env.DB.prepare(`INSERT INTO player_identities (id, player_id, game, game_player_id, game_player_name, created_at) VALUES (?, ?, ?, ?, ?, ?)`)
+        .bind(crypto.randomUUID(), playerId, identity.game, identity.gamePlayerId, identity.gamePlayerName, now));
+    }
+    await env.DB.batch(statements);
 
     return json(
       {
@@ -410,6 +418,7 @@ export async function POST(request: Request): Promise<Response> {
           playerName: player.playerName,
           discordName: player.discordName,
           discordId: player.discordId,
+          identities: identities.filter((identity): identity is NonNullable<typeof identity> => identity !== null),
           internalNotes: player.internalNotes,
           createdByDiscordId: player.createdByDiscordId,
           createdAt: now,

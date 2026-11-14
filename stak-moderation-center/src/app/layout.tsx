@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "STAK Moderation Center",
-  description: "STAK Moderation & Administration",
+  title: "STAK Moderation",
+  description: "Connect to the STAK Moderation portal with Discord.",
 };
 
 export default function RootLayout({

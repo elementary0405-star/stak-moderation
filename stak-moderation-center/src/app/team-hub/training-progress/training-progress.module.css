@@ -1,0 +1,30 @@
+.page { width: 100%; padding: 8px 0 40px; color: #e8eef7; }
+.header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 15px 0 28px; border-bottom: 1px solid #253348; }
+.header h1 { margin: 10px 0 8px; font-size: clamp(32px,5vw,46px); letter-spacing: -1.5px; }
+.header p, .panel p { color: #9aa9bc; font-size: 12px; line-height: 1.7; }
+.eyebrow { color: #79aee7; font-size: 9px; font-weight: 750; letter-spacing: 1.6px; }
+.panel, .reviewCard { margin: 22px 0; padding: 22px; border: 1px solid #29394d; border-radius: 7px; background: #101a28; }
+.panelHeading h2, .sectionTitle h2 { margin: 8px 0; font-size: 20px; }
+.panelHeading p { margin-bottom: 0; }
+.assignForm { display: grid; grid-template-columns: minmax(200px,1fr) minmax(200px,1fr) auto; align-items: end; gap: 14px; margin-top: 20px; }
+.assignForm label, .reviewNote { display: grid; gap: 7px; color: #cad6e5; font-size: 11px; }
+.assignForm select, .reviewNote textarea { width: 100%; min-height: 40px; padding: 10px 12px; border: 1px solid #364960; border-radius: 5px; outline: none; background: #09121d; color: #eef4fb; font: inherit; }
+.reviewNote textarea { resize: vertical; }
+.assignForm select:focus, .reviewNote textarea:focus { border-color: #5b94cc; }
+.primaryButton, .secondaryButton { min-height: 39px; border: 1px solid #4687c6; border-radius: 5px; padding: 9px 14px; background: #245b91; color: white; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.secondaryButton { border-color: #405a79; background: #121f30; color: #c9ddf6; }
+.primaryButton:disabled, .secondaryButton:disabled { opacity: .6; cursor: not-allowed; }
+.sectionTitle { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.count { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid #3b5675; border-radius: 50%; color: #b8d5f3; font-size: 11px; }
+.reviewCard header { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid #2a3a4e; }
+.reviewCard header h3 { margin: 8px 0 3px; }
+.reviewCard header p, .reviewCard time, .muted { color: #8fa0b5; font-size: 10px; }
+.reviewCard header time { white-space: nowrap; }
+.answer { margin: 17px 0; padding: 13px; border: 1px solid #29394d; border-radius: 5px; background: #0c1521; }
+.answer strong { color: #c5d7ec; font-size: 11px; line-height: 1.6; }
+.answer p { margin: 8px 0 0; color: #a9b7c8; font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.reviewNote { margin: 17px 0; }
+.actions { display: flex; gap: 10px; }
+.error, .notice { margin: 15px 0; padding: 12px 15px; border: 1px solid #773c4a; border-radius: 5px; background: #291720; color: #f0b5c0; font-size: 12px; }
+.notice { border-color: #345c4c; background: #14251e; color: #a6dfbf; }
+@media(max-width:720px) { .header, .reviewCard header { align-items: flex-start; flex-direction: column; } .assignForm { grid-template-columns: 1fr; } }

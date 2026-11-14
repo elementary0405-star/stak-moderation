@@ -1,5 +1,3 @@
-/// <reference path="../../../../../../.cloudflare/types/index.d.ts" />
-
 import { env } from "cloudflare:workers";
 import { getFreshDiscordSession } from "../../../../../lib/discord-auth";
 import { hasPortalAccess } from "../../../../../lib/portal-access";
@@ -105,15 +103,15 @@ export async function GET(
         c.sanction_type AS sanctionType,
         c.reason,
         c.notes,
-        c.status,
+        CASE WHEN c.status = 'lifted' OR EXISTS (SELECT 1 FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted') THEN 'lifted' ELSE c.status END AS status,
 
         c.started_at AS startedAt,
         c.duration_seconds AS durationSeconds,
         c.expires_at AS expiresAt,
 
-        c.lifted_at AS liftedAt,
-        c.lifted_by_discord_id AS liftedByDiscordId,
-        c.lifted_reason AS liftedReason,
+        COALESCE(c.lifted_at, (SELECT se.created_at FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS liftedAt,
+        COALESCE(c.lifted_by_discord_id, (SELECT se.actor_discord_id FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS liftedByDiscordId,
+        COALESCE(c.lifted_reason, (SELECT se.reason FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS liftedReason,
 
         c.created_by_discord_id AS createdByDiscordId,
         c.created_at AS createdAt,
@@ -259,7 +257,7 @@ export async function PATCH(
         game,
         reason,
         notes,
-        status
+        CASE WHEN status = 'lifted' OR EXISTS (SELECT 1 FROM sanction_events se WHERE se.case_id = cases.id AND se.event_type = 'lifted') THEN 'lifted' ELSE status END AS status
       FROM cases
       WHERE id = ?
       LIMIT 1

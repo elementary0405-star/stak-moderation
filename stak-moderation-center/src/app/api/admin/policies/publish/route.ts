@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { authorizePortalRequest } from "@/lib/portal-api-auth";
+import { authorizePortalPermissionRequest } from "@/lib/portal-api-auth";
 import { isSameOriginRequest, noStoreHeaders } from "@/lib/application-public";
 
 function containsUnfilledPlaceholder(value: string): boolean {
@@ -8,7 +8,7 @@ function containsUnfilledPlaceholder(value: string): boolean {
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return Response.json({ error: "Cross-origin request rejected." }, { status: 403, headers: noStoreHeaders() });
-  const authorization = await authorizePortalRequest(request, "staffManager");
+  const authorization = await authorizePortalPermissionRequest(request, "applications.publish");
   if ("response" in authorization) return authorization.response;
 
   try {

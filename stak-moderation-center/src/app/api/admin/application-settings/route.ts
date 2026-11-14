@@ -1,12 +1,12 @@
 import { env } from "cloudflare:workers";
-import { authorizePortalRequest } from "@/lib/portal-api-auth";
+import { authorizePortalPermissionRequest } from "@/lib/portal-api-auth";
 import { isPlainObject, isSameOriginRequest, noStoreHeaders } from "@/lib/application-public";
 
 const bindings = env as typeof env & { TURNSTILE_SITE_KEY?: string; TURNSTILE_SECRET_KEY?: string };
 
 export async function PATCH(request: Request) {
   if (!isSameOriginRequest(request)) return Response.json({ error: "Cross-origin request rejected." }, { status: 403, headers: noStoreHeaders() });
-  const authorization = await authorizePortalRequest(request, "staffManager");
+  const authorization = await authorizePortalPermissionRequest(request, "recruitment.manage");
   if ("response" in authorization) return authorization.response;
   try {
     const body: unknown = await request.json();

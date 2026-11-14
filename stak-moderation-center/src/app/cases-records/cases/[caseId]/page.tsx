@@ -1,8 +1,10 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { useParams } from "next/navigation";
-import PortalShell from "@/components/portal/PortalShell";
+import PortalShell from "@/components/PortalShell";
+import { getApiError, isApiObject, readApiObject } from "@/lib/client-api";
 
 type ModerationCase = {
   id: string;
@@ -41,21 +43,6 @@ type Evidence = {
   uploadedByDiscordId: string | null;
   createdAt: string;
 };
-
-type ApiPayload = Record<string, unknown>;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-async function readApiPayload(response: Response): Promise<ApiPayload> {
-  const value: unknown = await response.json();
-  return isRecord(value) ? value : {};
-}
-
-function getApiError(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim() ? value : fallback;
-}
 
 const SANCTION_LABELS: Record<string, string> = {
   permanent_ban: "Permanenter Bann",
@@ -99,11 +86,11 @@ function formatDuration(seconds: number | null): string {
 
 function normalizeCase(value: Record<string, unknown>): ModerationCase {
   const identities = Array.isArray(value.identities)
-    ? value.identities
+    ? value.identities.filter(isApiObject)
     : [];
 
   const evidence = Array.isArray(value.evidence)
-    ? value.evidence
+    ? value.evidence.filter(isApiObject)
     : [];
 
   return {
@@ -126,13 +113,13 @@ function normalizeCase(value: Record<string, unknown>): ModerationCase {
     liftedReason: (value.liftedReason ?? value.lifted_reason ?? null) as string | null,
     createdByDiscordId: (value.createdByDiscordId ?? value.created_by_discord_id ?? null) as string | null,
     createdAt: String(value.createdAt ?? value.created_at ?? ""),
-    identities: identities.map((item: Record<string, unknown>) => ({
+    identities: identities.map((item) => ({
       id: String(item.id ?? ""),
       game: String(item.game ?? ""),
       gamePlayerId: String(item.gamePlayerId ?? item.game_player_id ?? ""),
       gamePlayerName: (item.gamePlayerName ?? item.game_player_name ?? null) as string | null,
     })),
-    evidence: evidence.map((item: Record<string, unknown>) => ({
+    evidence: evidence.map((item) => ({
       id: String(item.id ?? ""),
       fileName: (item.fileName ?? item.file_name ?? null) as string | null,
       evidenceUrl: (item.evidenceUrl ?? item.evidence_url ?? null) as string | null,
@@ -170,19 +157,17 @@ export default function CaseDetailPage() {
         { cache: "no-store" },
       );
 
-      const payload = await readApiPayload(response);
+      const payload = await readApiObject(response);
 
       if (!response.ok) {
         throw new Error(
-          getApiError(payload.error, "Der Moderationsfall konnte nicht geladen werden."),
+          getApiError(payload, "Der Moderationsfall konnte nicht geladen werden."),
         );
       }
 
-      const rawCase = isRecord(payload.case) ? payload.case : payload;
+      const rawCase = isApiObject(payload.case) ? payload.case : payload;
 
-      const normalized = normalizeCase(
-        rawCase as Record<string, unknown>,
-      );
+      const normalized = normalizeCase(rawCase);
 
       setCaseRecord(normalized);
       setGame(normalized.game ?? "");
@@ -200,7 +185,8 @@ export default function CaseDetailPage() {
   }, [caseId]);
 
   useEffect(() => {
-    void loadCase();
+    const timer = window.setTimeout(() => { void loadCase(); }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadCase]);
 
   async function saveCase(event: FormEvent<HTMLFormElement>) {
@@ -227,11 +213,11 @@ export default function CaseDetailPage() {
         },
       );
 
-      const payload = await readApiPayload(response);
+      const payload = await readApiObject(response);
 
       if (!response.ok) {
         throw new Error(
-          getApiError(payload.error, "Der Moderationsfall konnte nicht gespeichert werden."),
+          getApiError(payload, "Der Moderationsfall konnte nicht gespeichert werden."),
         );
       }
 
@@ -268,11 +254,11 @@ export default function CaseDetailPage() {
         }),
       });
 
-      const payload = await readApiPayload(response);
+      const payload = await readApiObject(response);
 
       if (!response.ok) {
         throw new Error(
-          getApiError(payload.error, "Der Nachweis konnte nicht hinzugefügt werden."),
+          getApiError(payload, "Der Nachweis konnte nicht hinzugefügt werden."),
         );
       }
 
@@ -314,7 +300,7 @@ export default function CaseDetailPage() {
             {error || "Der Moderationsfall wurde nicht gefunden."}
           </p>
           <a
-            href="/case/records/cases"
+            href="/cases-records"
             className="inline-block rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/5"
           >
             Zurück zur Übersicht
@@ -330,7 +316,7 @@ export default function CaseDetailPage() {
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <a
-              href="/case/records/cases"
+              href="/cases-records"
               className="text-sm text-gray-400 hover:text-white"
             >
               ← Moderationsfälle

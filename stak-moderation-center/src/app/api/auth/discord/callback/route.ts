@@ -8,6 +8,8 @@ import {
   getHighestStakRole,
 } from "@/lib/discord-roles";
 
+const STAK_INVITE_URL = "https://discord.gg/SptuYQ6FP6";
+
 const bindings = env as typeof env & {
   DISCORD_CLIENT_ID?: string;
   DISCORD_CLIENT_SECRET?: string;
@@ -33,15 +35,15 @@ function getCookie(request: Request, name: string): string | null {
   return null;
 }
 
-function clearOAuthCookie(): string {
+function clearOAuthCookie(origin: string): string {
+  const secure = new URL(origin).protocol === "https:" ? "; Secure" : "";
   return [
     "discord_oauth_state=",
     "HttpOnly",
-    "Secure",
     "SameSite=Lax",
     "Path=/",
     "Max-Age=0",
-  ].join("; ");
+  ].join("; ") + secure;
 }
 
 function redirectWithError(error: string, origin: string): Response {
@@ -52,7 +54,8 @@ function redirectWithError(error: string, origin: string): Response {
     `${origin}/?discord_error=${encodeURIComponent(error)}`
   );
 
-  headers.append("Set-Cookie", clearOAuthCookie());
+  headers.append("Set-Cookie", clearOAuthCookie(origin));
+  headers.set("Cache-Control", "no-store");
 
   return new Response(null, {
     status: 302,
@@ -107,13 +110,7 @@ export async function GET(request: Request) {
     );
 
     if (!tokenResponse.ok) {
-      const errorDetails = await tokenResponse.text();
-
-      console.error(
-        "Discord token exchange failed:",
-        tokenResponse.status,
-        errorDetails
-      );
+      console.error("Discord token exchange failed:", tokenResponse.status);
 
       return redirectWithError("token_exchange_failed", origin);
     }
@@ -162,7 +159,10 @@ export async function GET(request: Request) {
 
     if (!memberResponse.ok) {
       if (memberResponse.status === 404) {
-        return redirectWithError("not_a_server_member", origin);
+        const headers = new Headers();
+        headers.set("Location", STAK_INVITE_URL);
+        headers.append("Set-Cookie", clearOAuthCookie(origin));
+        return new Response(null, { status: 302, headers });
       }
 
       console.error("Discord member lookup failed:", memberResponse.status);
@@ -183,7 +183,12 @@ export async function GET(request: Request) {
     const stakRole = getHighestStakRole(member.roles, false);
 
     if (!stakRole) {
-      return redirectWithError("no_stak_role", origin);
+      const headers = new Headers({
+        Location: `${origin}/access?reason=role`,
+        "Cache-Control": "no-store",
+      });
+      headers.append("Set-Cookie", clearOAuthCookie(origin));
+      return new Response(null, { status: 302, headers });
     }
 
     // Create the server-side session.
@@ -197,16 +202,23 @@ export async function GET(request: Request) {
 
     const headers = new Headers();
 
-    headers.set("Location", origin);
+    const destination = stakRole === "community-member"
+      ? `${origin}/community-area`
+      : `${origin}/staff-area`;
+    headers.set("Location", destination);
     headers.append("Set-Cookie", createSessionCookie(session.token));
-    headers.append("Set-Cookie", clearOAuthCookie());
+    headers.append("Set-Cookie", clearOAuthCookie(origin));
+    headers.set("Cache-Control", "no-store");
 
     return new Response(null, {
       status: 302,
       headers,
     });
   } catch (error) {
-    console.error("Discord callback error:", error);
+    console.error(
+      "Discord callback failed:",
+      error instanceof Error ? error.name : "unknown error",
+    );
 
     return redirectWithError("authentication_failed", origin);
   }

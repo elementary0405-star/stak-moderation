@@ -1,5 +1,5 @@
 import { clearSessionCookie } from "@/lib/auth";
-import { getFreshDiscordSession } from "@/lib/discord-auth";
+import { getFreshDiscordSession, StakAccessRoleMissingError } from "@/lib/discord-auth";
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +17,16 @@ export async function GET(request: Request) {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    console.error("Failed to retrieve or verify Discord session:", error);
+    if (error instanceof StakAccessRoleMissingError) {
+      return Response.json(
+        { authenticated: false, access: "missing_role" },
+        { status: 403, headers: { "Set-Cookie": clearSessionCookie(), "Cache-Control": "no-store" } },
+      );
+    }
+    console.error(
+      "Failed to retrieve or verify Discord session:",
+      error instanceof Error ? error.name : "unknown error",
+    );
     return Response.json(
       { authenticated: false, error: "role_verification_unavailable" },
       { status: 503, headers: { "Cache-Control": "no-store" } },

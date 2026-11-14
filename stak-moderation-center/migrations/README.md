@@ -1,8 +1,12 @@
 # Active Cloudflare D1 migrations
 
-The active migration folder is configured as `migrations_dir` in `wrangler.jsonc`. Apply migrations in order to the existing `stak-moderation-db` database.
+Wrangler uses this top-level folder as `migrations_dir`. Apply migrations in numeric order to the intended database. Production migrations were not run as part of this work.
 
-- `0005_public_applications_and_policies.sql`: live Discord-role verification timestamp, public application visitor sessions, policy versions/acknowledgements, configurable application questions, applications, review notes and history. Seeds an unpublished policy draft and editable starter questions.
-- `0006_case_counters.sql`: ensures the case number sequence table exists and seeds it from existing cases.
+- `0005_public_applications_and_policies.sql`: public applications, policy versions/acknowledgements, question builder and review history.
+- `0006_case_counters.sql`: atomic case-number sequence table, seeded from existing cases.
+- `0007_training_progress.sql`: legacy general training register tables. Historical rows remain intact; mutation endpoints are retired. The public Academy now uses the in-site versioned workflow added in `0010`.
+- `0008_announcements_and_tally_application.sql`: staff announcements and acknowledgements plus the imported Tally question flow.
+- `0009_authenticated_application_and_onboarding.sql`: Discord-bound Staff Guidelines acknowledgement, separate privacy acknowledgement, application throttling and per-account/version introduction progress; updates only the known unpublished draft policy.
+- `0010_academy_records_and_delivery.sql`: in-site Academy assignments, lesson progress, submission/review history, append-only sanction events, and announcement delivery outbox/receipts.
 
-The old migration files are kept under `archive/legacy-migrations/` and must not be run blindly.
+Files under `archive/legacy-migrations/` are preserved but are not part of Wrangler's configured migration directory. Do not run them blindly.

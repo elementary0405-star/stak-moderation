@@ -12,6 +12,7 @@ type ApplicationSummary = {
 type Question = {
   id: string; questionKey: string; sectionTitle: string; prompt: string; helpText: string;
   questionType: string; options: string[]; isRequired: boolean; isActive: boolean; sortOrder: number;
+  pageNumber: number; dependsOnQuestionKey: string | null; dependsOnValue: string | null;
 };
 type Acknowledgement = { id?: string; key: string; label: string; explanation: string; sortOrder: number; isRequired: boolean; type: "policy" | "privacy_notice" };
 type Policy = { id: string; version: string; title: string; introduction: string; policyContent: string; privacyNotice: string; status: string; isDraft: boolean };
@@ -21,7 +22,7 @@ type Tab = "inbox" | "form" | "policies";
 
 const STATUS_LABELS: Record<Status, string> = { new: "New", in_review: "In review", interview: "Interview", accepted: "Accepted", rejected: "Rejected", withdrawn: "Withdrawn" };
 const STATUS_OPTIONS: Status[] = ["new", "in_review", "interview", "accepted", "rejected", "withdrawn"];
-const EMPTY_QUESTION = { sectionTitle: "New section", prompt: "", helpText: "", questionType: "textarea", options: "", isRequired: true, isActive: true, sortOrder: 100 };
+const EMPTY_QUESTION = { sectionTitle: "New section", prompt: "", helpText: "", questionType: "textarea", options: "", isRequired: true, isActive: true, sortOrder: 100, pageNumber: 1, dependsOnQuestionKey: "", dependsOnValue: "" };
 
 function formatDate(value: unknown) {
   if (typeof value !== "string") return "—";
@@ -52,57 +53,86 @@ export default function StaffApplicationsPage() {
   const [policyDraft, setPolicyDraft] = useState<Policy | null>(null);
   const [ackDraft, setAckDraft] = useState<Acknowledgement[]>([]);
   const [recruitmentOpen, setRecruitmentOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const loadApplications = useCallback(async () => {
+  const fetchApplications = useCallback(async () => {
     const params = new URLSearchParams({ status: statusFilter, search });
-    const response = await fetch(`/api/admin/applications?${params}`, { credentials: "include", cache: "no-store" });
+    const response = await fetch("/api/admin/applications?" + params, { credentials: "include", cache: "no-store" });
     const data = await response.json() as { error?: string; applications?: ApplicationSummary[]; counts?: Array<{ status: string; count: number }> };
     if (!response.ok) throw new Error(data.error || "Unable to load applications.");
-    setApplications(data.applications ?? []);
-    setCounts(Object.fromEntries((data.counts ?? []).map((item) => [item.status, item.count])));
+    return data;
   }, [search, statusFilter]);
 
-  const loadConfig = useCallback(async () => {
+  const loadApplications = useCallback(async () => {
+    const data = await fetchApplications();
+    setApplications(data.applications ?? []);
+    setCounts(Object.fromEntries((data.counts ?? []).map((item) => [item.status, item.count])));
+  }, [fetchApplications]);
+
+  const fetchConfig = useCallback(async () => {
     const response = await fetch("/api/admin/application-config", { credentials: "include", cache: "no-store" });
     const data = await response.json() as Config & { error?: string };
     if (!response.ok) throw new Error(data.error || "Unable to load application configuration.");
+    return data;
+  }, []);
+
+  const applyConfig = useCallback((data: Config) => {
     setConfig(data);
     setPolicyDraft(data.policy);
     setAckDraft(data.acknowledgements ?? []);
     setRecruitmentOpen(data.recruitmentOpen === true);
   }, []);
 
-  const loadDetail = useCallback(async (id: string) => {
-    const response = await fetch(`/api/admin/applications/${id}`, { credentials: "include", cache: "no-store" });
+  const loadConfig = useCallback(async () => {
+    applyConfig(await fetchConfig());
+  }, [applyConfig, fetchConfig]);
+
+  const fetchDetail = useCallback(async (id: string) => {
+    const response = await fetch("/api/admin/applications/" + id, { credentials: "include", cache: "no-store" });
     const data = await response.json() as Detail & { error?: string };
     if (!response.ok) throw new Error(data.error || "Unable to load the application.");
+    return data;
+  }, []);
+
+  const applyDetail = useCallback((data: Detail) => {
     setDetail(data);
     setStatusDraft(data.application.status as Status);
   }, []);
 
+  const loadDetail = useCallback(async (id: string) => {
+    applyDetail(await fetchDetail(id));
+  }, [applyDetail, fetchDetail]);
+
   useEffect(() => {
     let active = true;
-    setLoading(true); setError(null);
-    loadApplications().catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Unable to load applications."); })
+    fetchApplications().then((data) => {
+      if (!active) return;
+      setApplications(data.applications ?? []);
+      setCounts(Object.fromEntries((data.counts ?? []).map((item) => [item.status, item.count])));
+    }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Unable to load applications."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [loadApplications]);
+  }, [fetchApplications]);
 
   useEffect(() => {
     if (tab !== "form" && tab !== "policies") return;
-    loadConfig().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to load configuration."));
-  }, [tab, loadConfig]);
+    let active = true;
+    fetchConfig().then((data) => { if (active) applyConfig(data); })
+      .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Unable to load configuration."); });
+    return () => { active = false; };
+  }, [tab, fetchConfig, applyConfig]);
 
   useEffect(() => {
-    if (!selectedId) { setDetail(null); return; }
-    setLoading(true); setError(null);
-    loadDetail(selectedId).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to load the application."))
-      .finally(() => setLoading(false));
-  }, [selectedId, loadDetail]);
+    if (!selectedId) return;
+    let active = true;
+    fetchDetail(selectedId).then((data) => { if (active) applyDetail(data); })
+      .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Unable to load the application."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [selectedId, fetchDetail, applyDetail]);
 
   async function refreshAll() {
     setMessage(null); setError(null);
@@ -138,7 +168,7 @@ export default function StaffApplicationsPage() {
   function startNewQuestion() { setEditingQuestionId(null); setQuestionDraft({ ...EMPTY_QUESTION }); }
   function startEditQuestion(question: Question) {
     setEditingQuestionId(question.id);
-    setQuestionDraft({ sectionTitle: question.sectionTitle, prompt: question.prompt, helpText: question.helpText, questionType: question.questionType, options: question.options.join("\n"), isRequired: question.isRequired, isActive: question.isActive, sortOrder: question.sortOrder });
+    setQuestionDraft({ sectionTitle: question.sectionTitle, prompt: question.prompt, helpText: question.helpText, questionType: question.questionType, options: question.options.join("\n"), isRequired: question.isRequired, isActive: question.isActive, sortOrder: question.sortOrder, pageNumber: question.pageNumber, dependsOnQuestionKey: question.dependsOnQuestionKey ?? "", dependsOnValue: question.dependsOnValue ?? "" });
   }
 
   async function saveQuestion() {
@@ -235,8 +265,8 @@ export default function StaffApplicationsPage() {
             <div className={styles.inboxLayout}>
               <section className={styles.listPanel}>
                 <div className={styles.filters}>
-                  <input aria-label="Search applications" placeholder="Search name, Discord or reference…" value={search} onChange={(event) => setSearch(event.target.value)} />
-                  <select aria-label="Filter application status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="all">All statuses</option>{STATUS_OPTIONS.map((item) => <option key={item} value={item}>{STATUS_LABELS[item]}</option>)}</select>
+                  <input aria-label="Search applications" placeholder="Search name, Discord or reference…" value={search} onChange={(event) => { setLoading(true); setError(null); setSearch(event.target.value); }} />
+                  <select aria-label="Filter application status" value={statusFilter} onChange={(event) => { setLoading(true); setError(null); setStatusFilter(event.target.value); }}><option value="all">All statuses</option>{STATUS_OPTIONS.map((item) => <option key={item} value={item}>{STATUS_LABELS[item]}</option>)}</select>
                 </div>
                 <div className={styles.applicationList}>
                   {loading && !applications.length ? <p className={styles.empty}>Loading applications…</p> : null}
@@ -256,7 +286,7 @@ export default function StaffApplicationsPage() {
                   <>
                     <div className={styles.detailHeader}><div><span className={styles.eyebrow}>{String(detail.application.referenceCode)}</span><h2>{String(detail.application.applicantName)}</h2><p>{String(detail.application.discordUsername)}{detail.application.discordUserId ? ` · ${String(detail.application.discordUserId)}` : ""}</p></div><span className={`${styles.status} ${styles[`status_${String(detail.application.status)}`]}`}>{STATUS_LABELS[detail.application.status as Status]}</span></div>
                     <div className={styles.detailFacts}><span>PRIMARY DEVICE<strong>{String(detail.application.primaryDevice).toUpperCase()}</strong></span><span>SUBMITTED<strong>{formatDate(detail.application.submittedAt)}</strong></span><span>POLICY ACCEPTED<strong>{formatDate(detail.application.policyAcceptedAt)}</strong></span></div>
-                    {detail.application.status === "accepted" ? <div className={styles.onboardingCallout}><span className={styles.eyebrow}>NEXT STAGE · STAFF QUALIFICATION</span><h3>Move the applicant into training onboarding</h3><p>Acceptance moves the applicant into the onboarding stage; it does not automatically grant full moderation permissions. Confirm the Moodle/Gnomio account, assign the common core and role-specific learning path, then review the required tests and practical sign-off before granting the final role permissions.</p><a href="/staff-training">Open Staff Training hub →</a><small>Moodle remains the source of truth for course progress. This portal does not currently synchronize Moodle grades or completion data.</small></div> : null}
+                    {detail.application.status === "accepted" ? <div className={styles.onboardingCallout}><span className={styles.eyebrow}>NEXT STAGE · STAK ACADEMY</span><h3>Move the applicant into training onboarding</h3><p>Acceptance starts onboarding; it does not automatically grant full moderation permissions. Assign the applicable course path, review the knowledge answers and practical work, and approve completion from a higher authorized role before changing permissions.</p><a href="/staff-training">Open STAK Academy →</a><small>Course progress, submission attempts, feedback, and approval history are kept in this portal.</small></div> : null}
                     <div className={styles.answers}><h3>Applicant responses</h3>
                       {detail.application.questions.map((question) => {
                         const id = String(question.id); const answer = detail.application.answers[id];
@@ -292,6 +322,9 @@ export default function StaffApplicationsPage() {
                 <label>Help text<textarea rows={2} value={questionDraft.helpText} onChange={(event) => setQuestionDraft((current) => ({ ...current, helpText: event.target.value }))} /></label>
                 <label>Field type<select value={questionDraft.questionType} onChange={(event) => setQuestionDraft((current) => ({ ...current, questionType: event.target.value }))}><option value="text">Short text</option><option value="textarea">Long answer</option><option value="single_choice">Single choice</option><option value="multiple_choice">Multiple choice</option><option value="yes_no">Yes / No</option></select></label>
                 {questionDraft.questionType === "single_choice" || questionDraft.questionType === "multiple_choice" ? <label>Options (one per line)<textarea rows={5} value={questionDraft.options} onChange={(event) => setQuestionDraft((current) => ({ ...current, options: event.target.value }))} /></label> : null}
+                <label>Application step<input type="number" min={1} max={30} value={questionDraft.pageNumber} onChange={(event) => setQuestionDraft((current) => ({ ...current, pageNumber: Number(event.target.value) }))} /></label>
+                <label>Show only when a previous answer matches<select value={questionDraft.dependsOnQuestionKey} onChange={(event) => setQuestionDraft((current) => ({ ...current, dependsOnQuestionKey: event.target.value }))}><option value="">Always show</option>{(config?.questions ?? []).filter((question) => question.id !== editingQuestionId && (question.questionType === "yes_no" || question.questionType === "single_choice")).map((question) => <option value={question.questionKey} key={question.id}>{question.prompt}</option>)}</select></label>
+                {questionDraft.dependsOnQuestionKey ? <label>Matching answer<input value={questionDraft.dependsOnValue} onChange={(event) => setQuestionDraft((current) => ({ ...current, dependsOnValue: event.target.value }))} placeholder="Exact answer, e.g. Ja" /></label> : null}
                 <label>Sort order<input type="number" value={questionDraft.sortOrder} onChange={(event) => setQuestionDraft((current) => ({ ...current, sortOrder: Number(event.target.value) }))} /></label>
                 <label className={styles.toggle}><input type="checkbox" checked={questionDraft.isRequired} onChange={(event) => setQuestionDraft((current) => ({ ...current, isRequired: event.target.checked }))} />Required question</label>
                 {editingQuestionId ? <label className={styles.toggle}><input type="checkbox" checked={questionDraft.isActive} onChange={(event) => setQuestionDraft((current) => ({ ...current, isActive: event.target.checked }))} />Active on public form</label> : null}
@@ -304,7 +337,7 @@ export default function StaffApplicationsPage() {
           {tab === "policies" ? (
             <div className={styles.policyBuilder}>
               {!config?.turnstileReady ? <div className={styles.error}>Cloudflare Turnstile is not configured. Public recruitment cannot be opened or applications submitted until both the site key and server secret are configured.</div> : null}
-              <div className={styles.recruitmentSwitch}><label><input type="checkbox" checked={recruitmentOpen} disabled={saving} onChange={(event) => void toggleRecruitment(event.target.checked)} /> Public recruitment is open</label><span>{recruitmentOpen && !config?.turnstileReady ? "The database is set to open, but submissions are blocked until Turnstile is configured." : recruitmentOpen ? "Applicants may submit once the published policy is accepted." : "The public application form is closed."}</span></div>
+              {user.stakRole === "owner" ? <div className={styles.recruitmentSwitch}><label><input type="checkbox" checked={recruitmentOpen} disabled={saving} onChange={(event) => void toggleRecruitment(event.target.checked)} /> Public recruitment is open</label><span>{recruitmentOpen && !config?.turnstileReady ? "The database is set to open, but submissions are blocked until Turnstile is configured." : recruitmentOpen ? "Applicants may submit once the published policy is accepted." : "The public application form is closed."}</span></div> : <div className={styles.info}>Only the Owner can open or close public recruitment. Managers may prepare the form and policy drafts.</div>}
               <div className={styles.policyStatus}><div><span className={styles.eyebrow}>PUBLIC POLICY</span><h2>Policy and acknowledgement builder</h2><p>Changes are saved as a draft. The previously published policy remains active until the new version is explicitly published.</p></div><span className={config?.activePolicy ? styles.publishedBadge : styles.draftBadge}>{config?.activePolicy ? `Published: ${config.activePolicy.version}` : "No public policy"}</span></div>
               {!config?.policy ? <div className={styles.error}>No policy configuration was returned. Apply the database migration and reload.</div> : null}
               {config?.sourceFormNote ? <div className={styles.info}>{config.sourceFormNote}</div> : null}
@@ -325,7 +358,7 @@ export default function StaffApplicationsPage() {
                     <button className={styles.dangerButton} onClick={() => setAckDraft((current) => current.filter((_, rowIndex) => rowIndex !== index))}>Remove</button>
                   </article>)}
                 </section>
-                <div className={styles.policyActions}><button onClick={() => void savePolicy()} disabled={saving}>{saving ? "Saving…" : "Save policy draft"}</button><button className={styles.publishButton} onClick={() => void publishPolicy()} disabled={saving || policyDraft.status === "published"}>Publish policy version</button></div>
+                <div className={styles.policyActions}><button onClick={() => void savePolicy()} disabled={saving}>{saving ? "Saving…" : "Save policy draft"}</button>{user.stakRole === "owner" ? <button className={styles.publishButton} onClick={() => void publishPolicy()} disabled={saving || policyDraft.status === "published"}>Publish policy version</button> : null}</div>
                 <p className={styles.legalNote}>Publishing is blocked while bracketed placeholders remain. Before publishing, have the responsible STAK decision-makers verify the legal controller details, purposes, legal bases, processors, retention periods and rights information. This editor does not replace legal review.</p>
               </> : null}
             </div>

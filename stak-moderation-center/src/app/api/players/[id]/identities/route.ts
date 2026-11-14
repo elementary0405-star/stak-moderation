@@ -197,17 +197,17 @@ export async function POST(
 
     const game =
       typeof body.game === "string"
-        ? body.game.trim()
+      ? body.game.trim().normalize("NFKC")
         : "";
 
     const gamePlayerId =
       typeof body.gamePlayerId === "string"
-        ? body.gamePlayerId.trim()
+      ? body.gamePlayerId.trim().normalize("NFKC")
         : "";
 
     const gamePlayerName =
       typeof body.gamePlayerName === "string"
-        ? body.gamePlayerName.trim() || null
+      ? body.gamePlayerName.trim().normalize("NFKC") || null
         : null;
 
     if (!game || game.length > 100) {
@@ -247,8 +247,8 @@ export async function POST(
         p.player_name
       FROM player_identities pi
       INNER JOIN players p ON p.id = pi.player_id
-      WHERE LOWER(pi.game) = LOWER(?)
-        AND pi.game_player_id = ?
+      WHERE LOWER(TRIM(pi.game)) = LOWER(?)
+        AND LOWER(TRIM(pi.game_player_id)) = LOWER(?)
       LIMIT 1
     `)
       .bind(game, gamePlayerId)

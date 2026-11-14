@@ -373,7 +373,11 @@ function PlayerRecordsContent({
   const [discordName, setDiscordName] = useState("");
   const [discordId, setDiscordId] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
+  const [identityGame, setIdentityGame] = useState("");
+  const [identityPlayerId, setIdentityPlayerId] = useState("");
+  const [identityPlayerName, setIdentityPlayerName] = useState("");
 
+  const [createInitialCase, setCreateInitialCase] = useState(false);
   const [initialGame, setInitialGame] = useState("");
   const [initialSanctionType, setInitialSanctionType] =
     useState("warning");
@@ -454,15 +458,15 @@ function PlayerRecordsContent({
     return () => window.clearTimeout(timer);
   }, [loadPlayers]);
 
-  useEffect(() => {
-    setOffset(0);
-  }, [search]);
-
   function resetPlayerForm() {
     setPlayerName("");
     setDiscordName("");
     setDiscordId("");
     setInternalNotes("");
+    setIdentityGame("");
+    setIdentityPlayerId("");
+    setIdentityPlayerName("");
+    setCreateInitialCase(false);
 
     setInitialGame("");
     setInitialSanctionType("warning");
@@ -544,12 +548,17 @@ function PlayerRecordsContent({
   async function createPlayer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!identityGame.trim() || !identityPlayerId.trim()) {
+      setFormError("Game Name and Player ID are required to identify this player record.");
+      return;
+    }
+
     setSaving(true);
     setFormError("");
 
-    const sanctionNeedsDuration =
+    const sanctionNeedsDuration = createInitialCase && (
       initialSanctionType === "temporary_ban" ||
-      initialSanctionType === "timeout";
+      initialSanctionType === "timeout");
 
     const durationValue = initialDuration.trim()
       ? Number(initialDuration)
@@ -578,13 +587,14 @@ function PlayerRecordsContent({
           discordName: discordName || null,
           discordId: discordId || null,
           internalNotes: internalNotes || null,
-          initialCase: {
+          identities: [{ game: identityGame, gamePlayerId: identityPlayerId, gamePlayerName: identityPlayerName || null }],
+          ...(createInitialCase ? { initialCase: {
             game: initialGame || null,
             sanctionType: initialSanctionType,
             reason: initialReason,
             notes: initialCaseNotes || null,
             durationSeconds: durationValue,
-          },
+          } } : {}),
         }),
       });
 
@@ -606,9 +616,9 @@ function PlayerRecordsContent({
       );
 
       setCreateOpen(false);
-      setSuccessMessage(
-        `Player record for ${name} and its initial moderation case were created.`,
-      );
+      setSuccessMessage(payload.case
+        ? `Player record for ${name} and its initial moderation case were created.`
+        : `Player record for ${name} was created.`);
 
       resetPlayerForm();
       setOffset(0);
@@ -709,7 +719,10 @@ function PlayerRecordsContent({
           <input
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setOffset(0);
+            }}
             placeholder="Search player name, Discord name or ID..."
             aria-label="Search player records"
           />
@@ -1059,13 +1072,20 @@ function PlayerRecordsContent({
               />
 
               <div className={styles.detailBlock}>
-                <h3>Initial Moderation Case</h3>
-                <p>
-                  Every new player record must have an initial moderation
-                  case. This case will be created together with the player.
-                </p>
+                <h3>Primary Game Identity</h3>
+                <p>The player record is matched by the normalized game name and Player ID. Discord details remain optional contact information.</p>
               </div>
+              <label>Game Name<input value={identityGame} onChange={(event) => setIdentityGame(event.target.value)} maxLength={100} required disabled={saving} placeholder="e.g. FiveM" /></label>
+              <label>Player ID<input value={identityPlayerId} onChange={(event) => setIdentityPlayerId(event.target.value)} maxLength={120} required disabled={saving} placeholder="Exact in-game identifier" /></label>
+              <label>In-game Name (optional)<input value={identityPlayerName} onChange={(event) => setIdentityPlayerName(event.target.value)} maxLength={100} disabled={saving} placeholder="Current in-game display name" /></label>
 
+              <label className={styles.checkLabel}><input type="checkbox" checked={createInitialCase} onChange={(event) => setCreateInitialCase(event.target.checked)} disabled={saving} />Create an initial moderation case now</label>
+
+              {createInitialCase && <>
+              <div className={styles.detailBlock}>
+                <h3>Initial Moderation Case</h3>
+                <p>Use this when a case is ready to be documented. Player records can also be created without a sanction.</p>
+              </div>
               <label>
                 Game / Platform
                 <input
@@ -1141,6 +1161,7 @@ function PlayerRecordsContent({
                   placeholder="Optional internal case notes..."
                 />
               </label>
+              </>}
 
               <div className={styles.formActions}>
                 <button
@@ -1157,7 +1178,7 @@ function PlayerRecordsContent({
                   className={styles.primaryButton}
                   disabled={saving}
                 >
-                  {saving ? "Creating..." : "Create Player & Case"}
+                  {saving ? "Creating..." : createInitialCase ? "Create Player & Case" : "Create Player Record"}
                 </button>
               </div>
             </form>

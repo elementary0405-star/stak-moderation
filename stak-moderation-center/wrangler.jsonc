@@ -5,7 +5,6 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "vinext/server/app-router-entry",
   "vars": {
-    "MOODLE_COURSE_URL": "",
     "TURNSTILE_SITE_KEY": ""
   },
   "assets": {

@@ -1,0 +1,36 @@
+.page { color: #f4f7fb; }
+.backLink { display: inline-flex; margin-bottom: 24px; color: #8db9e6; font-size: 12px; text-decoration: none; }
+.backLink:hover { color: #d1e7ff; }
+.heading { margin-bottom: 28px; }
+.eyebrow,.documentLabel { color: #78a9df; font-size: 9px; font-weight: 700; letter-spacing: 2.1px; }
+.heading h1 { margin: 13px 0 10px; font-size: clamp(36px, 5vw, 50px); font-weight: 550; letter-spacing: -1.6px; }
+.heading h1 span { color: #80b3eb; }
+.heading p { max-width: 690px; margin: 0; color: #9eacc0; font-size: 13px; line-height: 1.8; }
+.draftNotice,.error,.state { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; padding: 14px 16px; border: 1px solid #826640; border-radius: 6px; background: rgba(112, 82, 38, .13); color: #e1bf91; font-size: 12px; line-height: 1.7; }
+.draftNotice strong { font-size: 13px; }
+.error { border-color: #73545b; background: rgba(112, 42, 50, .14); color: #e0adb2; }
+.state { border-color: #26364b; background: #101927; color: #a9b9cd; }
+.document,.acknowledgement,.nextStep { margin-top: 18px; padding: clamp(20px, 4vw, 30px); border: 1px solid #26364b; border-radius: 7px; background: linear-gradient(145deg, #111c2b, #0d1521); }
+.documentHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid #263449; }
+.documentHeader h2 { margin: 9px 0 0; font-size: clamp(19px, 3vw, 25px); font-weight: 600; }
+.publishedBadge { padding: 6px 9px; border: 1px solid rgba(95, 190, 137, .35); border-radius: 999px; background: rgba(60, 145, 99, .12); color: #8ad8ab; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+.introduction { margin: 20px 0; color: #bdc9d8; font-size: 13px; font-weight: 600; line-height: 1.8; }
+.policyText { display: grid; gap: 14px; }
+.policyText p { margin: 0; color: #a9b8ca; font-size: 12px; line-height: 1.85; white-space: pre-wrap; }
+.versionDate { margin: 20px 0 0; color: #71839b; font-size: 10px; }
+.acknowledgement h2,.nextStep h2 { margin: 9px 0 7px; font-size: 20px; font-weight: 600; }
+.acknowledgement > p,.nextStep p { margin: 0; color: #9eacc0; font-size: 12px; line-height: 1.75; }
+.checkList { display: grid; gap: 9px; margin: 21px 0; }
+.checkRow { display: grid; grid-template-columns: 18px 1fr; gap: 12px; padding: 13px; border: 1px solid #29394f; border-radius: 5px; background: rgba(8, 13, 22, .42); cursor: pointer; }
+.checkRow input { margin: 3px 0 0; accent-color: #63a4e8; }
+.checkRow strong { display: block; color: #e1e9f3; font-size: 12px; line-height: 1.6; }
+.checkRow small { display: block; margin-top: 5px; color: #8598b0; font-size: 11px; line-height: 1.6; }
+.primaryButton,.secondaryButton { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 0 15px; border: 1px solid #477eb3; border-radius: 5px; background: #183755; color: #d7eafb; font: inherit; font-size: 11px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.primaryButton:hover:not(:disabled),.secondaryButton:hover { background: #214b73; }
+.primaryButton:disabled { border-color: #2b394a; background: #151e2b; color: #677a91; cursor: not-allowed; }
+.secondaryButton { border-color: #38485b; background: transparent; color: #afc0d5; }
+.success { margin-top: 18px; padding: 12px 14px; border: 1px solid rgba(95, 190, 137, .35); border-radius: 5px; background: rgba(60, 145, 99, .12); color: #9bdfb8; font-size: 12px; line-height: 1.6; }
+.errorText { margin-top: 13px !important; color: #e4aab0 !important; }
+.nextStep { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.nextStep p { max-width: 660px; }
+@media (max-width: 640px) { .documentHeader,.nextStep { align-items: flex-start; flex-direction: column; } .nextStep .primaryButton,.nextStep .secondaryButton { width: 100%; } }

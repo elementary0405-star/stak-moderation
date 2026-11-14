@@ -1,0 +1,28 @@
+.page { width:100%; padding:16px 0 40px; color:#e8eef7; }
+.back { color:#91bdea; font-size:11px; text-decoration:none; }
+.header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 0 28px; border-bottom:1px solid #29394d; }
+.header h1 { margin:9px 0 5px; font-size:clamp(30px,5vw,44px); }
+.header p,.panel p { color:#98a8bb; font-size:11px; line-height:1.7; }
+.eyebrow { color:#79aee7; font-size:9px; font-weight:750; letter-spacing:1.6px; }
+.role,.status { display:inline-block; padding:7px 10px; border:1px solid #405a79; border-radius:30px; color:#b8d5f3; font-size:9px; text-transform:uppercase; }
+.panel { margin:18px 0; padding:21px; border:1px solid #29394d; border-radius:7px; background:#101a28; }
+.sectionTitle { margin-bottom:17px; }
+.sectionTitle h2 { margin:7px 0 0; font-size:19px; }
+.formGrid { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+.formGrid label,.field { display:grid; gap:7px; margin:12px 0; color:#c9d5e4; font-size:11px; }
+.formGrid input,.formGrid select,.field textarea,.assignRow select { min-height:39px; padding:9px 11px; border:1px solid #364960; border-radius:5px; background:#09121d; color:#edf3fa; font:inherit; }
+.field textarea { resize:vertical; }
+.primary,.secondary { min-height:38px; border:1px solid #4687c6; border-radius:5px; padding:9px 13px; background:#245b91; color:#fff; font:inherit; font-size:11px; cursor:pointer; }
+.secondary { border-color:#405a79; background:#121f30; color:#c9ddf6; }
+.assignRow { display:flex; gap:10px; margin-bottom:15px; }
+.assignRow select { flex:1; }
+.list { display:grid; gap:9px; }
+.list article { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:13px; border:1px solid #2b3c50; border-radius:5px; background:#0c1521; }
+.list article > div { display:grid; gap:5px; }
+.list strong { color:#dfe9f5; font-size:11px; }
+.list small { color:#8798ad; font-size:10px; }
+.list p { margin:0; white-space:pre-wrap; }
+.muted { color:#8495a9; }
+.error,.notice { margin:14px 0; padding:12px 14px; border:1px solid #773c4a; border-radius:5px; background:#291720; color:#f0b5c0; font-size:11px; }
+.notice { border-color:#345c4c; background:#14251e; color:#a6dfbf; }
+@media(max-width:600px) { .header,.list article { align-items:flex-start; flex-direction:column; } .formGrid { grid-template-columns:1fr; } .assignRow { align-items:stretch; flex-direction:column; } }

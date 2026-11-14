@@ -1,14 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import PortalFeaturePage from "@/components/PortalFeaturePage";
-
-export default function Page() {
-  return (
-    <PortalFeaturePage
-      eyebrow="NEW STAFF ONBOARDING"
-      title="Staff Introduction"
-      description="The introduction explains the first steps after joining the team, where to find essential resources and what is expected before starting regular staff duties."
-      access="staff"
-    />
-  );
+export default function IntroductionRedirect() {
+  redirect("/team-hub?intro=1");
 }

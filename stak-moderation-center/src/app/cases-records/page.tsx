@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import PortalShell from "@/components/portal/PortalShell";
+import PortalShell from "@/components/PortalShell";
+import { getApiError, getApiArray, readApiObject } from "@/lib/client-api";
 
 type ModerationCase = {
   id: string;
@@ -104,15 +105,15 @@ export default function CasesPage() {
         { cache: "no-store" },
       );
 
-      const payload = await response.json();
+      const payload = await readApiObject(response);
 
       if (!response.ok) {
         throw new Error(
-          payload.error || "Moderationsfälle konnten nicht geladen werden.",
+          getApiError(payload, "Moderationsfälle konnten nicht geladen werden."),
         );
       }
 
-      setCases(Array.isArray(payload.cases) ? payload.cases : []);
+      setCases(getApiArray<ModerationCase>(payload, "cases"));
     } catch (err) {
       setError(
         err instanceof Error
@@ -224,6 +225,7 @@ export default function CasesPage() {
                     <tr key={item.id} className="hover:bg-white/[0.03]">
                       <td className="whitespace-nowrap px-4 py-3 font-mono">
                         {item.caseNumber}
+                        <a className="ml-2 text-blue-300 hover:underline" href={`/cases-records/cases/${encodeURIComponent(item.id)}`}>Open</a>
                       </td>
 
                       <td className="px-4 py-3">

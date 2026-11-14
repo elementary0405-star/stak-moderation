@@ -3,414 +3,99 @@
 import { useEffect, useState } from "react";
 import styles from "./home.module.css";
 
-type PortalUser = {
-  discordUserId: string;
-  username: string;
-  globalName: string | null;
-  avatar: string | null;
-  stakRole: string;
+type AuthPayload = {
+  authenticated?: boolean;
+  user?: { stakRole?: string } | null;
+  access?: string;
 };
 
-type AuthState = "loading" | "authenticated" | "guest";
-
-const ROLE_NAMES: Record<string, string> = {
-  owner: "Owner",
-  "co-owner": "Co-Owner",
-  management: "Management",
-  "staff-manager": "Staff Manager",
-  moderator: "Moderator",
-  "trail-moderator": "Trial Moderator",
-  "trial-moderator": "Trial Moderator",
-  "community-member": "Community Member",
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_callback: "Discord sign-in could not be completed. Please try again.",
+  invalid_state: "The security check expired. Please connect again.",
+  configuration_error:
+    "Discord sign-in is not configured in this environment. Check the local OAuth settings listed in the setup guide.",
+  redirect_uri_mismatch:
+    "The Discord callback URL does not match this environment. Check DISCORD_REDIRECT_URI.",
+  token_exchange_failed: "Discord could not verify the sign-in. Please try again.",
+  user_lookup_failed: "Your Discord account could not be retrieved. Please try again.",
+  member_lookup_failed: "STAK server membership could not be verified. Please try again shortly.",
+  no_stak_role: "You are on the STAK server, but your STAK access role has not been assigned yet.",
+  bots_not_allowed: "Bot accounts cannot access the STAK platform.",
+  authentication_failed: "Discord authentication failed. Please try again.",
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function parsePortalUser(data: unknown): PortalUser | null {
-  if (!isRecord(data)) return null;
-
-  let candidate = data;
-
-  if (isRecord(data.user)) {
-    candidate = data.user;
-  } else if (isRecord(data.session)) {
-    candidate = data.session;
-  }
-
-  if (typeof candidate.discordUserId !== "string") {
-    return null;
-  }
-
-  return {
-    discordUserId: candidate.discordUserId,
-    username:
-      typeof candidate.username === "string"
-        ? candidate.username
-        : "STAK Member",
-    globalName:
-      typeof candidate.globalName === "string"
-        ? candidate.globalName
-        : null,
-    avatar:
-      typeof candidate.avatar === "string"
-        ? candidate.avatar
-        : null,
-    stakRole:
-      typeof candidate.stakRole === "string"
-        ? candidate.stakRole
-        : "community-member",
-  };
-}
 
 export default function HomePage() {
-  const [authState, setAuthState] = useState<AuthState>("loading");
-  const [user, setUser] = useState<PortalUser | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorCode = params.get("discord_error");
+    if (errorCode) {
+      const detail = params.get("missing");
+      const base = ERROR_MESSAGES[errorCode] || "Discord sign-in could not be completed. Please try again.";
+      const message = errorCode === "configuration_error" && detail
+        ? `${base} Missing: ${detail.split(",").join(", ")}.`
+        : base;
+      const errorTimer = window.setTimeout(() => setAuthError(message), 0);
+      window.history.replaceState({}, "", window.location.pathname);
+      return () => window.clearTimeout(errorTimer);
+    }
+
     let active = true;
 
-    async function checkAuthentication() {
+    async function redirectAuthenticatedUser() {
       try {
         const response = await fetch("/api/auth/me", {
           method: "GET",
           credentials: "include",
           cache: "no-store",
         });
-
         if (!active) return;
-
-        if (!response.ok) {
-          setUser(null);
-          setAuthState("guest");
+        if (response.status === 403) {
+          const payload = (await response.json()) as AuthPayload;
+          if (payload.access === "missing_role") {
+            window.location.replace("/access?reason=role");
+          }
           return;
         }
+        if (!response.ok) return;
 
-        const data: unknown = await response.json();
-        const authenticatedUser = parsePortalUser(data);
+        const payload = (await response.json()) as AuthPayload;
+        if (!payload.authenticated || !payload.user?.stakRole) return;
 
-        if (!authenticatedUser) {
-          setUser(null);
-          setAuthState("guest");
-          return;
-        }
-
-        setUser(authenticatedUser);
-        setAuthState("authenticated");
+        const destination = payload.user.stakRole === "community-member"
+          ? "/community-area"
+          : "/staff-area";
+        window.location.replace(destination);
       } catch {
-        if (active) {
-          setUser(null);
-          setAuthState("guest");
-        }
+        // Keep the public sign-in page available if Discord cannot be checked.
       }
     }
 
-    void checkAuthentication();
-
+    void redirectAuthenticatedUser();
     return () => {
       active = false;
     };
   }, []);
 
-  const displayName =
-    user?.globalName || user?.username || "STAK Member";
-
-  const role = user?.stakRole
-    ? ROLE_NAMES[user.stakRole] || user.stakRole
-    : "Community Member";
-
-  const avatarExtension = user?.avatar?.startsWith("a_")
-    ? "gif"
-    : "png";
-
-  const avatarUrl =
-    user?.avatar && user.discordUserId
-      ? `https://cdn.discordapp.com/avatars/${user.discordUserId}/${user.avatar}.${avatarExtension}?size=128`
-      : null;
-
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <a href="/" className={styles.brand} aria-label="STAK Home">
-          <span className={styles.brandMark}>S</span>
-
-          <span className={styles.brandText}>
-            <strong>STAK</strong>
-            <small>MODERATION CENTER</small>
-          </span>
+      <span className={styles.backgroundMark} aria-hidden="true">S</span>
+      <section className={styles.content} aria-labelledby="home-title">
+        <img className={styles.logo} src="/stak-logo.png" alt="STAK" />
+        <h1 id="home-title">STAK Moderation</h1>
+        <a className={styles.connectButton} href="/api/auth/discord">
+          Connect with Discord
+          <span aria-hidden="true">→</span>
         </a>
-
-        <nav className={styles.navigation} aria-label="Main navigation">
-          <a href="#about">About</a>
-          <a href="/community-guidelines">Community Guidelines</a>
-          <a href="/apply">Apply</a>
-
-          {authState === "authenticated" ? (
-            <a href="/dashboard" className={styles.navButton}>
-              Open Portal
-            </a>
-          ) : (
-            <a href="/api/auth/discord" className={styles.navButton}>
-              Sign In
-            </a>
-          )}
-        </nav>
-      </header>
-
-      <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <div className={styles.statusBadge}>
-            <span className={styles.statusDot} />
-            STAK INTERNAL PLATFORM
-          </div>
-
-          <p className={styles.heroEyebrow}>
-            COMMUNITY MANAGEMENT & MODERATION
-          </p>
-
-          <h1>
-            One platform.
-            <br />
-            <span>Clear responsibilities.</span>
-          </h1>
-
-          <p className={styles.heroDescription}>
-            The central platform for STAK staff management,
-            moderation records and community information.
-            Everything organized in one place.
-          </p>
-
-          <div className={styles.heroActions}>
-            {authState === "authenticated" ? (
-              <a href="/dashboard" className={styles.primaryButton}>
-                Open Dashboard <span aria-hidden="true">→</span>
-              </a>
-            ) : (
-              <a
-                href="/api/auth/discord"
-                className={styles.primaryButton}
-              >
-                Continue with Discord <span aria-hidden="true">→</span>
-              </a>
-            )}
-
-            <a href="#about" className={styles.secondaryButton}>
-              Explore the Platform
-            </a>
-          </div>
-
-          <div className={styles.heroFooter}>
-            <span>Secure Discord Authentication</span>
-            <span className={styles.separator}>/</span>
-            <span>Role-Based Access</span>
-            <span className={styles.separator}>/</span>
-            <span>Centralized Management</span>
-          </div>
-        </div>
-
-        <div className={styles.heroVisual} aria-hidden="true">
-          <div className={styles.visualGlow} />
-
-          <div className={styles.visualCard}>
-            <div className={styles.visualHeader}>
-              <div>
-                <span className={styles.visualLabel}>STAK SYSTEM</span>
-                <strong>Management Center</strong>
-              </div>
-
-              <span className={styles.visualIndicator} />
-            </div>
-
-            <div className={styles.visualDivider} />
-
-            <div className={styles.visualRow}>
-              <span className={styles.visualIcon}>01</span>
-              <div>
-                <strong>Team Hub</strong>
-                <small>Staff & management</small>
-              </div>
-              <span className={styles.visualArrow}>→</span>
-            </div>
-
-            <div className={styles.visualRow}>
-              <span className={styles.visualIcon}>02</span>
-              <div>
-                <strong>Cases & Records</strong>
-                <small>Moderation database</small>
-              </div>
-              <span className={styles.visualArrow}>→</span>
-            </div>
-
-            <div className={styles.visualRow}>
-              <span className={styles.visualIcon}>03</span>
-              <div>
-                <strong>Staff Resources</strong>
-                <small>Internal documentation</small>
-              </div>
-              <span className={styles.visualArrow}>→</span>
-            </div>
-
-            <div className={styles.visualBottom}>
-              <span className={styles.visualBottomDot} />
-              SYSTEM OVERVIEW
-              <span>STAK</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {authState === "authenticated" && user && (
-        <section className={styles.accountBar}>
-          <div className={styles.accountInfo}>
-            <div className={styles.avatar}>
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" />
-              ) : (
-                displayName.charAt(0).toUpperCase()
-              )}
-            </div>
-
-            <div>
-              <strong>Welcome back, {displayName}</strong>
-              <span>{role}</span>
-            </div>
-          </div>
-
-          <a href="/dashboard" className={styles.accountLink}>
-            Go to your portal →
-          </a>
-        </section>
-      )}
-
-      <section className={styles.features} id="about">
-        <div className={styles.sectionHeading}>
-          <span className={styles.sectionEyebrow}>
-            PLATFORM OVERVIEW
-          </span>
-
-          <h2>
-            Everything you need.
-            <br />
-            <span>Nothing you don't.</span>
-          </h2>
-
-          <p>
-            The STAK Moderation Center brings essential internal
-            functions together in a structured and accessible
-            environment.
-          </p>
-        </div>
-
-        <div className={styles.featureGrid}>
-          <a href="/team-hub" className={styles.featureCard}>
-            <span className={styles.featureNumber}>01</span>
-            <h3>Team Hub</h3>
-            <p>
-              Personal staff workspace, absence management,
-              feedback and internal management tools.
-            </p>
-            <span className={styles.featureLink}>
-              Explore section →
-            </span>
-          </a>
-
-          <a href="/cases-records" className={styles.featureCard}>
-            <span className={styles.featureNumber}>02</span>
-            <h3>Cases & Records</h3>
-            <p>
-              Centralized player profiles, moderation cases,
-              sanctions and supporting evidence.
-            </p>
-            <span className={styles.featureLink}>
-              Explore section →
-            </span>
-          </a>
-
-          <a href="/staff-resources" className={styles.featureCard}>
-            <span className={styles.featureNumber}>03</span>
-            <h3>Staff Resources</h3>
-            <p>
-              Access important internal documents, procedures
-              and staff reference materials.
-            </p>
-            <span className={styles.featureLink}>
-              Explore section →
-            </span>
-          </a>
-
-        </div>
-      </section>
-
-      <section className={styles.publicAccess} aria-labelledby="public-access-heading">
-        <div className={styles.publicAccessHeading}>
-          <span className={styles.sectionEyebrow}>PUBLIC ACCESS</span>
-          <h2 id="public-access-heading">Interested in joining STAK?</h2>
-          <p>Review the published standards first. When recruitment is open, you can then submit your application.</p>
-        </div>
-        <div className={styles.publicAccessGrid}>
-          <a href="/apply" className={styles.publicAccessCard}>
-            <span className={styles.publicAccessNumber}>01 · APPLICATION</span>
-            <h3>Staff Application</h3>
-            <p>Check the eligibility requirements and complete the staff application when submissions are enabled.</p>
-            <span className={styles.publicAccessLink}>Open application →</span>
-          </a>
-          <a href="/community-guidelines" className={styles.publicAccessCard}>
-            <span className={styles.publicAccessNumber}>02 · GUIDELINES</span>
-            <h3>Guidelines &amp; Acknowledgements</h3>
-            <p>Read the current standards and individually confirm every required statement before applying.</p>
-            <span className={styles.publicAccessLink}>Read guidelines →</span>
-          </a>
-        </div>
-      </section>
-
-      <section className={styles.accessSection}>
-        <div>
-          <span className={styles.sectionEyebrow}>PORTAL ACCESS</span>
-          <h2>Part of the STAK team?</h2>
-          <p>
-            Sign in using your Discord account to access the
-            functions available to your current STAK role.
-          </p>
-        </div>
-
-        {authState === "authenticated" ? (
-          <a href="/dashboard" className={styles.primaryButton}>
-            Open Portal →
-          </a>
+        {authError ? (
+          <p className={styles.errorMessage} role="alert">{authError}</p>
         ) : (
-          <a
-            href="/api/auth/discord"
-            className={styles.primaryButton}
-          >
-            Sign In with Discord →
-          </a>
+          <p className={styles.securityNote}>
+            Your STAK membership and access role are verified with Discord.
+          </p>
         )}
       </section>
-
-      <footer className={styles.footer}>
-        <a href="/" className={styles.footerBrand}>
-          STAK <span>MODERATION CENTER</span>
-        </a>
-
-        <p>Internal platform for the STAK community.</p>
-
-        <div className={styles.footerLinks}>
-          <a href="/community-guidelines">Guidelines</a>
-          <a href="/apply">Apply</a>
-          <a
-            href="https://discord.gg/SptuYQ6FP6"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Discord
-          </a>
-        </div>
-
-        <span className={styles.copyright}>
-          © {new Date().getFullYear()} STAK. All rights reserved.
-        </span>
-      </footer>
     </main>
   );
 }

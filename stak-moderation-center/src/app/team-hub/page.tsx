@@ -39,6 +39,15 @@ const PERSONAL_CARDS: HubCard[] = [
   {
     number: "03",
     category: "COMMUNICATION",
+    title: "Staff Announcements",
+    description:
+      "Read team updates and acknowledge important notices when requested.",
+    href: "/team-hub/announcements",
+    access: "staff",
+  },
+  {
+    number: "04",
+    category: "COMMUNICATION",
     title: "Feedback Box",
     description:
       "Send confidential feedback, suggestions or concerns directly to the Owner.",
@@ -49,7 +58,7 @@ const PERSONAL_CARDS: HubCard[] = [
 
 const MANAGEMENT_CARDS: HubCard[] = [
   {
-    number: "04",
+    number: "05",
     category: "STAFF OVERVIEW",
     title: "Staff Directory",
     description:
@@ -58,21 +67,12 @@ const MANAGEMENT_CARDS: HubCard[] = [
     access: "staffManager",
   },
   {
-    number: "05",
+    number: "06",
     category: "STAFF ADMINISTRATION",
     title: "Warnings & History",
     description:
       "Review staff warnings, document relevant incidents and maintain disciplinary history.",
     href: "/team-hub/warnings",
-    access: "staffManager",
-  },
-  {
-    number: "06",
-    category: "INTERNAL SUPPORT",
-    title: "Staff Tickets",
-    description:
-      "Review internal staff requests, respond to inquiries and manage ticket statuses.",
-    href: "/team-hub/staff-tickets",
     access: "staffManager",
   },
   {
@@ -84,11 +84,20 @@ const MANAGEMENT_CARDS: HubCard[] = [
     href: "/team-hub/applications",
     access: "staffManager",
   },
+  {
+    number: "08",
+    category: "STAFF DEVELOPMENT",
+    title: "Academy Reviews",
+    description:
+      "Assign course paths, review practical work, and approve completion with an auditable history.",
+    href: "/team-hub/training-progress",
+    access: "staffManager",
+  },
 ];
 
 const OWNER_CARDS: HubCard[] = [
   {
-    number: "08",
+    number: "09",
     category: "OWNER TOOLS",
     title: "Feedback Inbox",
     description:

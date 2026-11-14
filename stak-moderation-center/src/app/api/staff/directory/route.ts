@@ -1,12 +1,6 @@
 import { env } from "cloudflare:workers";
 import { getFreshDiscordSession } from "@/lib/discord-auth";
-
-const ALLOWED_ROLES = [
-  "staff-manager",
-  "management",
-  "co-owner",
-  "owner",
-];
+import { hasPermission } from "@/lib/portal-access";
 
 type DirectoryRecord = {
   discordUserId: string;
@@ -39,7 +33,7 @@ export async function GET(request: Request): Promise<Response> {
       return json({ error: "Authentication required." }, 401);
     }
 
-    if (!ALLOWED_ROLES.includes(user.stakRole)) {
+    if (!hasPermission(user.stakRole, "staff.directory.read")) {
       return json({ error: "Access denied." }, 403);
     }
 
@@ -79,6 +73,7 @@ export async function GET(request: Request): Promise<Response> {
           ) AS absence_rank
         FROM staff_absences
         WHERE status IN ('submitted', 'reviewed')
+          AND start_date <= date('now')
           AND (
             expected_return_date IS NULL
             OR expected_return_date >= date('now')

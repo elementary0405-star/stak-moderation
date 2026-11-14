@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { getFreshDiscordSession } from "@/lib/discord-auth";
 import { hasPortalAccess } from "@/lib/portal-access";
 import type { DiscordSessionUser } from "@/lib/auth";
+import { isSameOriginRequest } from "@/lib/application-public";
 
 const FEEDBACK_CATEGORIES = [
   "general",
@@ -139,6 +140,9 @@ export async function GET(request: Request): Promise<Response> {
  * Creates a confidential feedback message for the Owner.
  */
 export async function POST(request: Request): Promise<Response> {
+  if (!isSameOriginRequest(request)) {
+    return json({ error: "Cross-origin request rejected." }, 403);
+  }
   try {
     const auth = await getStaffUser(request);
 

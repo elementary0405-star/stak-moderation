@@ -1,50 +1,29 @@
-STAK Moderation Center – Portal Update
+STAK MODERATION — CURRENT PORTAL IMPLEMENTATION
 
-ZIELORDNER
-Entpacke diesen Ordnerinhalt in:
+ACTIVE PROJECT
 C:\Users\hagen\Documents\GitHub\stak-moderation\stak-moderation-center
 
-WICHTIG
-- Die vorhandenen Dateien src/lib/auth.ts, src/app/api/auth/me/route.ts,
-  src/app/dashboard/page.tsx und src/app/dashboard/dashboard.module.css werden ersetzt.
-- Die übrigen Dateien werden neu angelegt.
-- Andere Projektdateien (package.json, wrangler.jsonc, Vinext-Konfiguration,
-  OAuth-Callback, Logout-Route, discord-roles.ts usw.) bleiben unverändert.
-- Das Paket enthält die neue Portal-Oberfläche, Navigation, Rollenansichten,
-  Unterseiten-Platzhalter, die Live-Rollenprüfung gegen Discord und die
-  Bestätigungsabfrage vor dem Abmelden.
+This is the active project. Archive and copied project folders are preserved as reference and are not part of the active application.
 
-ROLLEN
-- Community Member: Apply und Community Guidelines.
-- Staff: Team Hub, Cases & Records und Staff Resources.
-- Trail-Moderator und höhere Staff-Ränge: zusätzlich Staff Training und Cases & Records.
-- Staff Manager und höhere Ränge: Verwaltungsbereiche im Team Hub.
-- Feedback Inbox: exakt Owner.
-- Die bestehende Rollen-Priorität bleibt erhalten.
+CURRENT WEBSITE
+- The public homepage is intentionally minimal: STAK identity, one Connect with Discord action and a short security note.
+- OAuth sends recognized staff to /staff-area and community members to /community-area. Staff take priority. A server member without a recognized role receives a clear access notice.
+- The Community Area links only to Staff Application and Staff Guidelines. Community rules stay on Discord; internal staff material is not publicly exposed.
+- Applications are tied to the verified Discord account. The original Tally questions were imported; no PC/laptop exclusion is applied. Recruitment stays closed until approved policy/privacy and Turnstile configuration are complete.
+- STAK Academy is in-site, with General Staff, Ingame, Staff Manager and Management courses, persistent lesson/submission history and higher-role approval.
+- Staff directory entries open manager-only staff records. Player records use normalized Game Name + Player ID, may exist without a case, and retain sanction lift events separately.
+- Staff announcements enter a delivery outbox. They are shown as pending until the bot reports actual Discord delivery.
 
-SICHERHEIT / LIVE-SYNC
-Die API /api/auth/me fragt bei jedem Aufruf die aktuelle Mitgliedschaft und
-STAK-Rollen beim Discord-Server ab. Wenn das Konto nicht mehr Mitglied ist
-oder keine STAK-Rolle besitzt, wird die lokale Session widerrufen. Wenn
-Discord vorübergehend nicht erreichbar ist, wird keine alte Rolle als
-verifiziert ausgegeben; das Portal zeigt stattdessen einen Prüfungsfehler.
+LOCAL START AND CONFIGURATION
+The project uses Node.js, Vinext/Vite and Cloudflare Workers/D1. Run `npm run dev:vinext` from the active project to use http://localhost:3001.
+Copy `.dev.vars.example` to `.dev.vars`, then enter local OAuth, bot and (if needed) Turnstile values. The Discord OAuth redirect URI must exactly match the registered callback. No secrets belong in source control.
 
-NOCH NICHT FUNKTIONSFERTIG
-Die neuen Team Hub-, Cases-, Applications-, Absence-, Feedback-, Warning-,
-Growth- und Staff-Ticket-Seiten sind derzeit bewusst gekennzeichnete
-Struktur-/Designseiten. Sie speichern noch keine Daten und senden noch keine
-Discord-Nachrichten. Dafür werden als nächster Entwicklungsschritt sichere
-D1-Tabellen, geschützte API-Routen und die Bot-Anbindung eingerichtet.
-Für neue Daten-APIs ist der Helfer authorizePortalRequest in
-src/lib/portal-api-auth.ts vorgesehen. Er soll vor jedem Lesen oder Schreiben
-vertraulicher Daten aufgerufen werden.
-Die Staff Training Seite wartet auf die bestätigte Moodle/Gnomio-Kursadresse.
-Die Community Guidelines müssen noch mit dem tatsächlichen Regelwerk befüllt
-werden.
+DATABASE AND DEPLOYMENT
+Additive migrations are in the active `migrations/` folder. Migrations 0009 and 0010 add account-bound onboarding, Academy workflow, sanction history and announcement outbox. No production migration or deployment was performed. Review and back up the intended D1 database before any future production change.
 
-NACH DEM ENTPACKEN
-1. Speichere alle Dateien.
-2. Öffne PowerShell im Projektordner.
-3. Führe npm run build:vinext aus.
-4. Schicke mir die vollständige Ausgabe, falls Build-Fehler erscheinen.
-5. Noch nicht deployen, bevor der lokale Build geprüft wurde.
+VERIFICATION COMPLETED
+- `npm run build:vinext` — passed.
+- `npx tsc --noEmit` — passed.
+- `git diff --check` — passed with line-ending conversion warnings only.
+
+OAuth login, Discord announcements delivery and bot-side ticket gating still require configured credentials and the bot to consume the protected integration endpoints. The eligibility API is present, but the bot itself has not been changed in this website task.

@@ -68,6 +68,23 @@ export async function getOrCreateApplicationVisitor(request: Request): Promise<A
   return { visitorKeyHash, setCookie: cookieHeader(request, token) };
 }
 
+/**
+ * The legacy applications table requires a visitor key for referential
+ * integrity. New authenticated submissions receive an unexposed random key;
+ * Discord identity and policy acknowledgement are stored in their dedicated
+ * server-side fields instead of relying on a browser visitor cookie.
+ */
+export async function createApplicationSubmissionVisitorKey(): Promise<string> {
+  const visitorKeyHash = await hashToken(createToken());
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString();
+  await env.DB.prepare(`
+    INSERT INTO application_visitors (visitor_key_hash, expires_at, last_seen_at)
+    VALUES (?, ?, ?)
+  `).bind(visitorKeyHash, expiresAt, now.toISOString()).run();
+  return visitorKeyHash;
+}
+
 export function isSameOriginRequest(request: Request): boolean {
   const expectedOrigin = new URL(request.url).origin;
   const fetchSite = request.headers.get("sec-fetch-site");

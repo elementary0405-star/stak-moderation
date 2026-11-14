@@ -127,7 +127,8 @@ function StaffDirectoryContent() {
   }, []);
 
   useEffect(() => {
-    void loadDirectory();
+    const timer = window.setTimeout(() => { void loadDirectory(); }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadDirectory]);
 
   const filteredMembers = members.filter((member) => {
@@ -271,11 +272,11 @@ function StaffDirectoryContent() {
                     <tr key={member.discordUserId}>
                       <td>
                         <div className={styles.member}>
-                          <strong>
-                            {member.globalName || member.username}
-                          </strong>
+                            <a className={styles.memberLink} href={`/team-hub/staff-directory/${encodeURIComponent(member.discordUserId)}`}>
+                              {member.globalName || member.username}
+                            </a>
                           <span>{member.username}</span>
-                          <small>{member.discordUserId}</small>
+                            <small><a className={styles.memberIdLink} href={`/team-hub/staff-directory/${encodeURIComponent(member.discordUserId)}`}>{member.discordUserId} · Open staff record</a></small>
                         </div>
                       </td>
 

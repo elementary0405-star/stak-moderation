@@ -767,7 +767,22 @@
   font-weight: 700;
 }
 
-.modal input,
+.modal form > .checkLabel {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: fit-content;
+  font-weight: 600;
+}
+
+.modal .checkLabel input {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+  accent-color: #5ca2e8;
+}
+
+.modal input:not([type="checkbox"]),
 .modal textarea {
   width: 100%;
   min-height: 40px;

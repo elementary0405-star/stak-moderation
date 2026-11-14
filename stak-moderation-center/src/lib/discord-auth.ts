@@ -9,6 +9,13 @@ import { STAK_DISCORD, getHighestStakRole } from "./discord-roles";
 
 const ROLE_REFRESH_INTERVAL_MS = 60_000;
 
+export class StakAccessRoleMissingError extends Error {
+  constructor() {
+    super("The Discord member has no recognized STAK access role.");
+    this.name = "StakAccessRoleMissingError";
+  }
+}
+
 const bindings = env as typeof env & {
   DISCORD_BOT_TOKEN?: string;
 };
@@ -73,7 +80,7 @@ export async function getFreshDiscordSession(
   const role = getHighestStakRole(member.roles ?? [], false);
   if (!role) {
     await deleteDiscordSessionByHash(record.tokenHash);
-    return null;
+    throw new StakAccessRoleMissingError();
   }
 
   await updateDiscordSessionRole(record.tokenHash, role);

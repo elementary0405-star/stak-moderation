@@ -187,7 +187,7 @@ export async function GET(request: Request): Promise<Response> {
     }
 
     if (status) {
-      conditions.push("c.status = ?");
+      conditions.push("(CASE WHEN c.status = 'lifted' OR EXISTS (SELECT 1 FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted') THEN 'lifted' ELSE c.status END) = ?");
       parameters.push(status);
     }
 
@@ -212,7 +212,7 @@ export async function GET(request: Request): Promise<Response> {
         c.sanction_type,
         c.reason,
         c.notes,
-        c.status,
+        CASE WHEN c.status = 'lifted' OR EXISTS (SELECT 1 FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted') THEN 'lifted' ELSE c.status END AS status,
         c.started_at,
         c.duration_seconds,
         c.expires_at,

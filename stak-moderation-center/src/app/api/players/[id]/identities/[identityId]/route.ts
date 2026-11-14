@@ -148,7 +148,7 @@ export async function PATCH(
         );
       }
 
-      const value = body.game.trim();
+      const value = body.game.trim().normalize("NFKC");
 
       if (!value || value.length > 100) {
         return json(
@@ -174,7 +174,7 @@ export async function PATCH(
         );
       }
 
-      const value = body.gamePlayerId.trim();
+      const value = body.gamePlayerId.trim().normalize("NFKC");
 
       if (!value || value.length > 150) {
         return json(
@@ -205,7 +205,7 @@ export async function PATCH(
 
       const value =
         typeof body.gamePlayerName === "string"
-          ? body.gamePlayerName.trim() || null
+          ? body.gamePlayerName.trim().normalize("NFKC") || null
           : null;
 
       if (value && value.length > 150) {
@@ -242,8 +242,8 @@ export async function PATCH(
     const duplicate = await env.DB.prepare(`
       SELECT id
       FROM player_identities
-      WHERE LOWER(game) = LOWER(?)
-        AND game_player_id = ?
+      WHERE LOWER(TRIM(game)) = LOWER(?)
+        AND LOWER(TRIM(game_player_id)) = LOWER(?)
         AND id != ?
       LIMIT 1
     `)

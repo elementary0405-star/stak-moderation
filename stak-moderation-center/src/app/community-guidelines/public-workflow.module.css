@@ -26,4 +26,22 @@
 .success { margin: 16px 0; padding: 13px 15px; border: 1px solid #326b59; border-radius: 6px; background: #10271f; color: #a7e6ca; font-size: 12px; line-height: 1.6; }
 .smallNote { margin-top: 15px; color: #74869c; font-size: 10px; line-height: 1.7; }
 .continueLink { display: inline-block; margin-top: 14px; color: #a8cff5; font-size: 13px; font-weight: 700; text-decoration: none; }
+.ruleMeta { display: flex; justify-content: space-between; gap: 16px; margin: 30px 0 14px; color: #91add0; font-size: 10px; font-weight: 700; letter-spacing: 1.7px; }
+.ruleMeta span:last-child { color: #768ba8; font-weight: 500; letter-spacing: .5px; }
+.ruleGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ruleCard,.rulePlatform { border: 1px solid #26364b; border-radius: 8px; background: linear-gradient(145deg, #111c2b, #0d1521); }
+.ruleCard { position: relative; min-height: 184px; padding: 24px 24px 22px 60px; }
+.ruleNumber { position: absolute; top: 24px; left: 22px; color: #80b7f0; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.ruleCard h2 { margin: 0 0 13px; color: #f1f5fa; font-size: 17px; }
+.ruleCard ul { display: grid; gap: 10px; margin: 0; padding-left: 16px; color: #aebbd0; font-size: 12px; line-height: 1.7; }
+.rulePlatform { margin-top: 14px; padding: 24px; }
+.rulePlatform p { margin: 12px 0 15px; color: #adb9ca; font-size: 13px; line-height: 1.75; }
+.rulePlatform a { color: #94c6fb; text-underline-offset: 3px; }
+.rulePlatform strong { color: #edf3fb; font-size: 13px; }
+.applicationPolicy { margin-top: 76px; padding-top: 34px; border-top: 1px solid #253144; }
+.applicationPolicyHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+.applicationPolicyHeading h2 { margin: 10px 0 7px; color: #f3f6fa; font-size: clamp(23px, 3vw, 31px); letter-spacing: -.6px; }
+.applicationPolicyHeading p { max-width: 680px; margin: 0; color: #9facbf; font-size: 13px; line-height: 1.7; }
+.applicationPolicy .panel h3,.applicationPolicy .acceptance h3 { margin: 14px 0 9px; color: #edf2f8; font-size: 21px; }
+@media (max-width: 760px) { .ruleGrid { grid-template-columns: 1fr; } .ruleCard { min-height: auto; } .applicationPolicyHeading { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 640px) { .panel,.acceptance,.notice { padding: 20px; } .panelTop { flex-direction: column; } }

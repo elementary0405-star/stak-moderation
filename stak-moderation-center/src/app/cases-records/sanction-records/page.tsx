@@ -1,7 +1,9 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import PortalShell from "@/components/portal/PortalShell";
+import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import PortalShell from "@/components/PortalShell";
+import { getApiError, getApiArray, readApiObject } from "@/lib/client-api";
 
 type Sanction = {
   id: string;
@@ -47,7 +49,7 @@ function formatDate(value: string | null): string {
 }
 
 function formatDuration(seconds: number | null): string {
-  if (!seconds) return "Unbegrenzt";
+  if (seconds === null) return "Unbegrenzt";
 
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -108,15 +110,15 @@ export default function SanctionsPage() {
         { cache: "no-store" },
       );
 
-      const payload = await response.json();
+      const payload = await readApiObject(response);
 
       if (!response.ok) {
         throw new Error(
-          payload.error || "Sanktionen konnten nicht geladen werden.",
+          getApiError(payload, "Sanktionen konnten nicht geladen werden."),
         );
       }
 
-      setSanctions(Array.isArray(payload.sanctions) ? payload.sanctions : []);
+      setSanctions(getApiArray<Sanction>(payload, "sanctions"));
     } catch (err) {
       setError(
         err instanceof Error
@@ -156,11 +158,11 @@ export default function SanctionsPage() {
         }),
       });
 
-      const payload = await response.json();
+      const payload = await readApiObject(response);
 
       if (!response.ok) {
         throw new Error(
-          payload.error || "Die Sanktion konnte nicht aufgehoben werden.",
+          getApiError(payload, "Die Sanktion konnte nicht aufgehoben werden."),
         );
       }
 

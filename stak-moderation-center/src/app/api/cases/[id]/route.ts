@@ -124,13 +124,13 @@ async function findCase(id: string): Promise<CaseRecord | null> {
       c.sanction_type,
       c.reason,
       c.notes,
-      c.status,
+      CASE WHEN c.status = 'lifted' OR EXISTS (SELECT 1 FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted') THEN 'lifted' ELSE c.status END AS status,
       c.started_at,
       c.duration_seconds,
       c.expires_at,
-      c.lifted_at,
-      c.lifted_by_discord_id,
-      c.lifted_reason,
+      COALESCE(c.lifted_at, (SELECT se.created_at FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS lifted_at,
+      COALESCE(c.lifted_by_discord_id, (SELECT se.actor_discord_id FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS lifted_by_discord_id,
+      COALESCE(c.lifted_reason, (SELECT se.reason FROM sanction_events se WHERE se.case_id = c.id AND se.event_type = 'lifted' ORDER BY se.created_at DESC LIMIT 1)) AS lifted_reason,
       c.created_by_discord_id,
       c.created_at,
       c.updated_at
@@ -366,22 +366,9 @@ export async function PATCH(
 
       await env.DB.batch([
         env.DB.prepare(`
-          UPDATE cases
-          SET
-            status = 'lifted',
-            lifted_at = ?,
-            lifted_by_discord_id = ?,
-            lifted_reason = ?,
-            updated_at = ?
-          WHERE id = ?
-            AND status = 'active'
-        `).bind(
-          now,
-          actorId,
-          liftReason,
-          now,
-          id,
-        ),
+          INSERT INTO sanction_events (id, case_id, event_type, reason, actor_discord_id, created_at, details_json)
+          VALUES (?, ?, 'lifted', ?, ?, ?, '{}')
+        `).bind(crypto.randomUUID(), id, liftReason, actorId, now),
 
         env.DB.prepare(`
           INSERT INTO audit_logs (

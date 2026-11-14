@@ -1,0 +1,19 @@
+.page { color: #f4f7fb; }
+.backLink { display: inline-block; margin-bottom: 26px; color: #93bce7; font-size: 12px; font-weight: 700; text-decoration: none; }
+.backLink:hover { color: #d3e6fa; }
+.heading { max-width: 800px; margin: 0 0 31px; padding-bottom: 26px; border-bottom: 1px solid #263449; }
+.eyebrow { color: #7eafe2; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
+.heading h1 { margin: 14px 0 8px; font-size: clamp(28px, 4.5vw, 40px); line-height: 1.12; letter-spacing: -1.2px; }
+.subtitle { margin: 0; color: #8094ae; font-size: 11px; letter-spacing: .3px; }
+.intro { margin: 22px 0 0; color: #b5c2d4; font-size: 14px; line-height: 1.85; }
+.sectionList { display: grid; gap: 14px; }
+.section { padding: 23px 24px; border: 1px solid #26364b; border-radius: 7px; background: linear-gradient(145deg, #111c2b, #0d1521); }
+.section h2 { margin: 0 0 16px; color: #8fbae5; font-size: 15px; letter-spacing: .6px; }
+.section p { margin: 0 0 12px; color: #c0cad8; font-size: 13px; line-height: 1.85; }
+.section p:last-child { margin-bottom: 0; }
+.state,.error { margin: 18px 0; padding: 17px; border: 1px solid #293b52; border-radius: 6px; background: #0e1724; color: #b6c6da; font-size: 13px; }
+.error { border-color: #6b3b47; background: #22151b; color: #edb1b8; }
+.error p { margin: 0 0 12px; }
+.error button { border: 1px solid #87535b; border-radius: 4px; padding: 8px 12px; background: transparent; color: #ffe5e8; cursor: pointer; }
+@media (max-width: 640px) { .section { padding: 20px; } .section h2 { font-size: 13px; } .section p { font-size: 12px; } }
+

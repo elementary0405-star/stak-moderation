@@ -34,7 +34,10 @@ export async function GET(request: Request) {
         SELECT id, question_key AS questionKey, section_title AS sectionTitle,
                prompt, help_text AS helpText, question_type AS questionType,
                options_json AS optionsJson, is_required AS isRequired,
-               is_active AS isActive, sort_order AS sortOrder
+               is_active AS isActive, sort_order AS sortOrder,
+               page_number AS pageNumber,
+               depends_on_question_key AS dependsOnQuestionKey,
+               depends_on_value AS dependsOnValue
         FROM application_questions ORDER BY sort_order ASC
       `).all(),
       env.DB.prepare(`SELECT version, published_at AS publishedAt FROM policy_versions WHERE status = 'published' LIMIT 1`).first(),
@@ -59,7 +62,7 @@ export async function GET(request: Request) {
       activePolicy,
       recruitmentOpen: Number(recruitmentSettings?.recruitmentOpen ?? 0) === 1,
       turnstileReady: Boolean(bindings.TURNSTILE_SITE_KEY && bindings.TURNSTILE_SECRET_KEY),
-      sourceFormNote: "Starter questions are editable examples based on the confirmed STAK requirements. The complete 17-page Tally form has not yet been fully captured, so these questions are not represented as a verified copy of that form.",
+      sourceFormNote: "The public form now includes the questions and conditional experience follow-ups reconciled from the 17-page legacy Tally form. The old handbook and agreement confirmations remain part of the unpublished policy draft for owner review.",
     }, { headers: noStoreHeaders() });
   } catch (error) {
     console.error("[admin-application-config-get]", error);

@@ -1,5 +1,3 @@
-/// <reference path="../../../../../.cloudflare/types/index.d.ts" />
-
 import { env } from "cloudflare:workers";
 import { getFreshDiscordSession } from "../../../../lib/discord-auth";
 import { hasPortalAccess } from "../../../../lib/portal-access";

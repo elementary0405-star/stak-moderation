@@ -1,0 +1,29 @@
+.page { width:100%; padding:10px 0 40px; color:#e8eef7; }
+.header { padding:12px 0 24px; border-bottom:1px solid #29394d; }
+.back { display:block; margin-bottom:20px; color:#91bdea; font-size:11px; text-decoration:none; }
+.eyebrow { color:#79aee7; font-size:9px; font-weight:750; letter-spacing:1.6px; }
+.header h1 { margin:9px 0 7px; font-size:clamp(32px,5vw,46px); }
+.header p,.privacy p { color:#9aa9bc; font-size:12px; line-height:1.7; }
+.privacy { margin:18px 0; padding:15px 17px; border:1px solid #354760; border-radius:6px; background:#111d2c; }
+.privacy strong { color:#cfe2f9; font-size:12px; }
+.privacy p { margin:6px 0 0; font-size:11px; }
+.grid { display:grid; grid-template-columns:minmax(280px,.9fr) minmax(320px,1.1fr); gap:18px; align-items:start; }
+.form,.history { padding:21px; border:1px solid #29394d; border-radius:7px; background:#101a28; }
+.form h2,.history h2 { margin:8px 0 16px; font-size:19px; }
+.form label { display:grid; gap:7px; margin:14px 0; color:#c6d3e3; font-size:11px; }
+.form input,.form select,.form textarea { width:100%; min-height:40px; padding:10px 11px; border:1px solid #364960; border-radius:5px; outline:none; background:#09121d; color:#eef4fb; font:inherit; }
+.form textarea { resize:vertical; }
+.form input:focus,.form select:focus,.form textarea:focus { border-color:#5b94cc; }
+.form button { min-height:40px; padding:10px 15px; border:1px solid #4687c6; border-radius:5px; background:#245b91; color:#fff; font:inherit; font-size:11px; font-weight:700; cursor:pointer; }
+.form button:disabled { opacity:.6; cursor:not-allowed; }
+.historyHeading { margin-bottom:15px; }
+.item { margin:10px 0; padding:14px; border:1px solid #2c3d51; border-radius:5px; background:#0c1521; }
+.itemTop { display:flex; justify-content:space-between; gap:10px; color:#8ca1ba; font-size:9px; text-transform:uppercase; }
+.itemTop strong { color:#b8d5f3; }
+.item h3 { margin:10px 0 6px; font-size:14px; }
+.item p { margin:0 0 11px; color:#a6b4c5; font-size:11px; line-height:1.7; white-space:pre-wrap; }
+.item time,.empty { color:#8292a6; font-size:10px; }
+.empty { line-height:1.7; }
+.error,.notice { margin:14px 0; padding:12px 14px; border:1px solid #773c4a; border-radius:5px; background:#291720; color:#f0b5c0; font-size:11px; }
+.notice { border-color:#345c4c; background:#14251e; color:#a6dfbf; }
+@media(max-width:780px) { .grid { grid-template-columns:1fr; } }
